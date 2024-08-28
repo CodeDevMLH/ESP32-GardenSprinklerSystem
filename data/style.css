@@ -1,0 +1,442 @@
+/*
+MARK: Basics
+*/
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow-x: hidden; /* Verhindert horizontales Scrollen */
+}
+
+body {
+  font-family: Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+header {
+  background-color: #4caf50;
+  color: white;
+  padding: 10px 0;
+  text-align: center;
+}
+
+/*
+MARK: Navbar
+*/
+nav {
+  display: flex;
+  justify-content: center;
+  background-color: #333;
+  flex-wrap: wrap;
+  position: -webkit-sticky;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  width: 100%;
+}
+
+nav a {
+  color: white;
+  padding: 14px 20px;
+  text-decoration: none;
+  text-align: center;
+}
+
+nav a:hover {
+  background-color: #5a5a5a;
+  color: white;
+}
+
+/* Aktiver Tab etwas heller */
+nav a.active {
+  background-color: #505050;
+}
+
+/* NOT-AUS rot hinterlegen */
+nav a.emergency-stop {
+  background-color: red;
+  color: white;
+}
+
+nav a.emergency-stop:hover {
+  background-color: rgb(148, 0, 0);
+  color: white;
+}
+
+/*
+MARK: Container
+*/
+.container {
+  flex: 1;
+  padding: 20px;
+  padding-bottom: 60px;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: left;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.container * {
+  text-align: left;
+}
+
+.footer {
+  background-color: #333;
+  color: white;
+  text-align: center;
+  padding: 10px;
+  position: relative;
+  bottom: 0;
+  width: 100%;
+  margin-top: 0px;
+}
+
+h2 {
+  color: #4caf50;
+}
+
+.icon {
+  margin-right: 10px;
+}
+
+.headicon {
+  width: 36px; /* Breite des Bildes */
+  height: auto; /* Höhe automatisch anpassen, um das Seitenverhältnis beizubehalten */
+  vertical-align: middle; /* Vertikale Ausrichtung des Bildes zur Textmitte */
+  margin-right: 8px; /* Abstand zwischen Bild und Text */
+}
+
+/*Basisstil für die Switches
+  MARK: Switches
+  */
+.switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center; /* Vertikale Ausrichtung */
+  gap: 0px; /* Abstand zwischen Schalter und Text */
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: relative;
+  display: inline-block;
+  width: 38px;
+  height: 20px;
+  background-color: #ccc;
+  border-radius: 20px;
+  transition: 0.4s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 2px;
+  bottom: 2px;
+  background-color: white;
+  border-radius: 50%;
+  transition: 0.4s;
+}
+
+input:checked + .slider {
+  background-color: #4caf50;
+}
+
+input:checked + .slider:before {
+  transform: translateX(
+    18px
+  ); /* Verschiebung basierend auf der Slider-Breite */
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px #4caf50;
+}
+
+.switch-timer-container {
+  display: inline-flex;
+  align-items: center; /* Vertikale Ausrichtung */
+  gap: 10px; /* Abstand zwischen Schalter und Uhrzeit */
+}
+
+/*
+MARK: Tabelle
+*/
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+table,
+th,
+td {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
+th {
+  background-color: #f2f2f2;
+}
+
+th,
+td {
+  text-align: left;
+}
+
+tr:nth-child(even) {
+  background-color: #f2f2f2;
+}
+
+hr {
+  margin: 20px 0;
+}
+
+/*
+MARK: Info Table ResD
+*/
+@media (min-width: 1120px) {
+  #info_table {
+    width: 80%;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+/*
+MARK: Links
+*/
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/*
+MARK: Slider
+*/
+.sliderrange {
+  -webkit-appearance: none; /* Override default CSS styles */
+  appearance: none;
+  width: 100%; /* Full-width */
+  height: 15px; /* Specified height */
+  border-radius: 5px; /* Rounded slider */
+  background: #d3d3d3; /* Grey background */
+  outline: none; /* Remove outline */
+  opacity: 0.7; /* Set transparency (for mouse-over effects on hover) */
+  -webkit-transition: 0.2s; /* 0.2 seconds transition on hover */
+  transition: opacity 0.2s;
+}
+
+/* Mouse-over effects */
+.sliderrange:hover {
+  opacity: 1; /* Fully shown on mouse-over */
+}
+
+/* The slider handle (use -webkit- (Chrome, Opera, Safari, Edge) and -moz- (Firefox) to override default look) */
+.sliderrange::-webkit-slider-thumb {
+  -webkit-appearance: none; /* Override default look */
+  appearance: none;
+  width: 25px; /* Set a specific slider handle width */
+  height: 25px; /* Slider handle height */
+  border-radius: 50%; /* Round slider handle */
+  background: #0492bd; /* blue background */
+  cursor: pointer; /* Cursor on hover */
+}
+
+.sliderrange::-moz-range-thumb {
+  width: 25px; /* Set a specific slider handle width */
+  height: 25px; /* Slider handle height */
+  background: #0492bd; /* blue background */
+  cursor: pointer; /* Cursor on hover */
+}
+
+/*
+MARK: Responsive Design
+*/
+@media (max-width: 1120px) {
+  .container {
+    max-width: 100%;
+    padding: 10px;
+  }
+}
+
+@media (min-width: 1121px) {
+  .container {
+    max-width: 60%;
+  }
+}
+
+@media (max-width: 340px) {
+  nav a span {
+    display: none;
+  }
+
+  nav a {
+    padding: 10px;
+  }
+
+  h2 {
+    font-size: 1.2em;
+  }
+
+  p,
+  table {
+    font-size: 0.9em;
+  }
+}
+
+@media (min-width: 341px) {
+  nav a span {
+    display: inline;
+  }
+}
+
+@media (max-width: 1080px) {
+  #timeclock-content {
+    overflow-x: auto; /* Erlaubt horizontales Scrollen nur in diesem Container */
+    width: 100%;
+  }
+}
+
+
+
+/*
+MARK: Formulare
+*/
+input[type="submit"],
+input[type="reset"],
+input[type="button"] {
+  border: none; /* Kein Rahmen */
+  color: white; /* Weißer Text */
+  padding: 10px 20px; /* Innenabstand */
+  text-align: center; /* Zentrierter Text */
+  text-decoration: none; /* Keine Textdekoration */
+  display: inline-block; /* Inline-Block-Anzeige */
+  font-size: 16px; /* Schriftgröße */
+  margin: 4px 2px; /* Außenabstand */
+  cursor: pointer; /* Mauszeiger ändert sich zu Hand */
+  border-radius: 5px; /* Abgerundete Ecken */
+  min-width: 130px; /* Mindestbreite */
+}
+
+input[type="submit"] {
+  background-color: green; /* Grüne Hintergrundfarbe */
+}
+
+input[type="submit"]:hover {
+  background-color: #026302; /* Dunkleres Grün beim Hover */
+}
+
+input[type="submit"]:active {
+  background-color: #014a01; /* Noch dunkleres Grün beim Klicken */
+}
+
+input[type="reset"],
+#stop-timer[type="button"] {
+  background-color: #f44336; /* Rote Hintergrundfarbe für Reset */
+}
+
+input[type="reset"]:hover,
+#stop-timer[type="button"]:hover {
+  background-color: #a82523; /* Dunkleres Rot beim Hover */
+}
+
+input[type="reset"]:active,
+#stop-timer[type="button"]:active {
+  background-color: #961f1f; /* Noch dunkleres Rot beim Klicken */
+}
+
+input[type="button"] {
+  background-color: #008cba; /* Blaue Hintergrundfarbe für Button */
+}
+
+input[type="button"]:hover {
+  background-color: #007bb5; /* Dunkleres Blau beim Hover */
+}
+
+input[type="button"]:active {
+  background-color: #005f87; /* Noch dunkleres Blau beim Klicken */
+}
+
+/* Standardstil für den Button mit der Klasse "wechselButton" */
+input[type="button"].manualControl.red {
+  background-color: #f44336;
+}
+/* Hover-Stil für Rot */
+input[type="button"].manualControl.red:hover {
+  background-color: #a82523; /* Dunkleres Rot beim Hover */
+}
+input[type="button"].manualControl.red:active {
+  background-color: #961f1f; /* Dunkleres Rot beim Hover */
+}
+
+input[type="button"].manualControl.green {
+  background-color: green;
+}
+/* Hover-Stil für Grün */
+input[type="button"].manualControl.green:hover {
+  background-color: #026302; /* Dunkleres Grün beim Hover */
+}
+input[type="button"].manualControl.green:active {
+  background-color: #014a01; /* Dunkleres Grün beim Hover */
+}
+
+/*
+MARK: Time Input ResD
+*/
+@media (max-width: 800px) {
+  input[type="number"],
+  input[type="time"] {
+    max-width: 80px;
+  }
+}
+
+/* Upload Formular */
+#upload-form label {
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+#upload-form input[type="file"] {
+  background-color: #f1f1f1; /* Helle Hintergrundfarbe */
+  border: 2px solid #ccc; /* Grauer Rahmen */
+  padding: 5px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: border-color 0.3s ease;
+}
+
+#upload-form input[type="file"]:hover {
+  border-color: #888; /* Dunklerer Rahmen beim Hover */
+}
+
+#upload-form button {
+  background-color: #4caf50; /* Grüne Hintergrundfarbe */
+  border: none; /* Kein Rahmen */
+  color: white; /* Weißer Text */
+  padding: 10px 20px; /* Innenabstand */
+  text-align: center; /* Zentrierter Text */
+  font-size: 16px; /* Schriftgröße */
+  cursor: pointer; /* Mauszeiger ändert sich zu Hand */
+  border-radius: 5px; /* Abgerundete Ecken */
+  transition: background-color 0.3s ease;
+}
+
+#upload-form button:hover {
+  background-color: #45a049; /* Dunkleres Grün beim Hover */
+}
+
+#upload-form button:active {
+  background-color: #3e8e41; /* Noch dunkleres Grün beim Klicken */
+}

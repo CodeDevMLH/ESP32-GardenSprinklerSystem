@@ -10,3 +10,8 @@ The web interface is currently only in german available, feel free to translate 
 # Hardware
 The project builds up on the ESP32-Hardware and is currently not running on any other microcontrollers.
 The ESP triggers relays with a HIGH level on the output GPIO. So I recommend HIGH level relays to control the Pump and magnetic valve (commonly 24V AC)
+
+# To-Do
+- nice sucess/error/info/confirm alerts
+- all Serial.prints also on WebSerial
+- and probably much more...

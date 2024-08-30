@@ -261,6 +261,6 @@ bool resetConfig() {
 
   saveConfig(configFilePath);
 
-  Serial.println("Config resetted");
+  Serial.println("and resetted");
   return true;
 }

@@ -13,6 +13,5 @@ The ESP triggers relays with a HIGH level on the output GPIO. So I recommend HIG
 Optional, the web interface displays current sensor reading e.g. temperature, humidity, ground humidity etc.
 
 # To-Do
-- nice sucess/error/info/confirm alerts
 - all Serial.prints also on WebSerial
 - and probably much more...

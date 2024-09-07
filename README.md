@@ -14,5 +14,5 @@ Optional, the web interface displays current sensor reading e.g. temperature, hu
 
 # To-Do
 - ~~nice success/error/info/confirm alerts~~
-- all Serial.prints also on WebSerial
+- ~~all Serial.prints also on WebSerial~~
 - and probably much more...

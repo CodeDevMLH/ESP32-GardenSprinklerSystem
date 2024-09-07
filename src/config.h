@@ -62,8 +62,8 @@ struct Config {
   bool MENTION_SUNSET;
 
   int MAX_PUMP_TIME;
-  int MAX_VENT1_TIME;
-  int MAX_VENT2_TIME;
+  int MAX_VALVE1_TIME;
+  int MAX_VALVE2_TIME;
 
   DayConfig MON;
   DayConfig TUE;

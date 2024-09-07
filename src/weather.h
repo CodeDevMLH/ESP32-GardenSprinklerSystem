@@ -23,6 +23,7 @@ extern const String openWeatherForecastUrl;
 extern const String meteomaticsUrl;
 
 void getWeatherOpenWeather();
+bool getWeatherMeteo24H();
 bool updateCalculatedRainDataWithDuration();
 bool checkUpdateRainData();
 void getWeatherForecastOpenWeather();

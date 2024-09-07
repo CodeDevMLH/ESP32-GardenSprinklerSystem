@@ -21,7 +21,7 @@ int lastSyncDay = -1;
 
 bool syncTimeWithNTP() {
   // Set Timezones and config
-  configTime(0, 0, ntpServer1, ntpServer2);
+  configTime(0, 0, config.network.NTP_SERVER.c_str(), ntpServerBackUp);
   setenv("TZ", Timezone, 1);
   tzset();
 

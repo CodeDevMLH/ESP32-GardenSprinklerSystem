@@ -10,11 +10,13 @@
 
 #include <ElegantOTA.h>
 #include <WebSerial.h>
+//#include <stdarg.h>
 
 #include "configuration.h"
 #include "ntp.h"
 #include "sensors.h"
 #include "weather.h"
+#include "WebSerialUtils.h"
 
 #if !(defined(ESP32))
 #error This code is intended to run on the ESP32 platform! Please check your Tools->Board setting.
@@ -30,16 +32,16 @@ const unsigned long RESTART_INTERVAL = 30UL * 24UL * 60UL * 60UL * 1000UL; // 30
 // configFilePath is at /config.json, declared in configuration.cpp
 
 // MARK: PINOUT
-const int vent_1_button = 36; // the number of the pushbutton pin for vent 1
-const int vent_1_led = 27;    // the number of the LED pin for light indicator of vent 1
-const int vent_2_button = 39; // the number of the pushbutton pin for vent 2
-const int vent_2_led = 32;    // the number of the LED pin for light indicator of vent 2
+const int valve_1_button = 36; // the number of the pushbutton pin for valve 1
+const int valve_1_led = 27;    // the number of the LED pin for light indicator of valve 1
+const int valve_2_button = 39; // the number of the pushbutton pin for valve 2
+const int valve_2_led = 32;    // the number of the LED pin for light indicator of valve 2
 const int pump_button = 34;   // the number of the pushbutton pin for pump
 const int pump_led = 23;      // the number of the LED pin for light indicator of pump
 const int action_button = 35; // the number of the pushbutton pin for action
 const int action_led = 13;    // the number of the LED pin for light indicator of action
-const int vent_1_relay = 19;  // the number of the relay pin for vent 1
-const int vent_2_relay = 18;  // the number of the relay pin for vent 2
+const int valve_1_relay = 19;  // the number of the relay pin for valve 1
+const int valve_2_relay = 18;  // the number of the relay pin for valve 2
 const int pump_relay = 17;    // the number of the relay pin for pump
 const int action_relay = 16;  // the number of the relay pin for action
 
@@ -53,8 +55,8 @@ const int OneWireBus = 26;
 
 const int DHTPIN = 4; // Digital pin connected to the DHT sensor
 
-const char *ntpServer1 = "ptbtime1.ptb.de";
-const char *ntpServer2 = "pool.ntp.org";
+//const char *ntpServer1 = "ptbtime1.ptb.de";
+const char *ntpServerBackUp = "pool.ntp.org";
 const char *Timezone = "CET-1CEST,M3.5.0/2,M10.5.0/3";
 // Example time zones
 // const char* Timezone = "GMT0BST,M3.5.0/01,M10.5.0/02";     // UK
@@ -70,20 +72,20 @@ const char *Timezone = "CET-1CEST,M3.5.0/2,M10.5.0/3";
 // MARK: Variables
 // deckare variables
 int pumpEndTime = -1;
-int vent1EndTime = -1;
-int vent2EndTime = -1;
+int valve1EndTime = -1;
+int valve2EndTime = -1;
 int actionEndTime = -1;
 
 int pumpStartTime = -1;
-int vent1StartTime = -1;
-int vent2StartTime = -1;
+int valve1StartTime = -1;
+int valve2StartTime = -1;
 int actionStartTime = -1;
 
 int currentTime = -1;
 
 bool pumpState = false;
-bool vent1State = false;
-bool vent2State = false;
+bool valve1State = false;
+bool valve2State = false;
 bool actionState = false;
 
 bool setTimer1Active = false;
@@ -96,18 +98,20 @@ bool TimerLogicActive = false;
 
 int timerTyp = 0;
 
-const unsigned long debounceDelay = 20; // the debounce time to avoid flickers
-int lastVent1State = LOW;
-int lastVent2State = LOW;
+// the debounce time to avoid flickers
+const unsigned long debounceDelay = 16;
+
+int lastValve1State = LOW;
+int lastValve2State = LOW;
 int lastPumpState = LOW;
 int lastActionState = LOW;
-int Vent1ButtonState;
-int Vent2ButtonState;
+int Valve1ButtonState;
+int Valve2ButtonState;
 int PumpButtonState;
 int ActionButtonState;
 
-unsigned long lastVent1DebounceTime = 0;
-unsigned long lastVent2DebounceTime = 0;
+unsigned long lastValve1DebounceTime = 0;
+unsigned long lastValve2DebounceTime = 0;
 unsigned long lastPumpDebounceTime = 0;
 unsigned long lastActionDebounceTime = 0;
 
@@ -119,6 +123,7 @@ AsyncWebServer server(80); // Create AsyncWebServer object on port 80
 // AsyncWebSocket ws("/ws");   // Create WebSockets object
 DNSServer dns; // Wifi Manager DNS Server for manager website
 
+//MARK: Reboot
 void reboot() {
     // reboots the esp
     delay(1000);
@@ -132,7 +137,7 @@ void checkReboot() {
     // check reboot at 3:00
     if (timeinfo.tm_hour == 3 && (timeinfo.tm_min >= 0 && timeinfo.tm_min <= 1)) {
         if (millis() > RESTART_INTERVAL) {
-            Serial.println("rebooting due to reboot interval");
+            println("rebooting due to reboot interval");
             delay(400); // delay to allow serial to print
             reboot();
         }
@@ -141,20 +146,19 @@ void checkReboot() {
 
 // MARK: Wifi
 boolean setNewWiFi(String ssid, String password) {
-    // MARK: setNewWiFi
     WiFi.disconnect();
     WiFi.begin(ssid.c_str(), password.c_str());
 
-    Serial.print("New SSID: ");
-    Serial.println(ssid);
-    Serial.print("New password: ");
-    Serial.println(password);
+    print("New SSID: ");
+    println(ssid);
+    print("New password: ");
+    println(password);
 
     while (WiFi.status() != WL_CONNECTED) {
         delay(500);
-        Serial.print(".");
+        print(".");
     }
-    Serial.println("\nConnected to new network!");
+    println("\nConnected to new network!");
     return true;
 }
 
@@ -219,32 +223,32 @@ bool calculateSecurityCheck(int startTime, int duration) {
 //  Initialize LitlleFS
 void initLittleFS() {
     if (!LittleFS.begin()) {
-        Serial.println("An Error has occurred while mounting LittleFS");
+        println("An Error has occurred while mounting LittleFS");
         return;
     }
-    Serial.println("LittleFS initialized.");
+    println("LittleFS initialized.");
 
     /*
     if(!LittleFS.begin(FORMAT_LITTLEFS_IF_FAILED)){
-      Serial.println("An Error has occurred while mounting LittleFS");
+      println("An Error has occurred while mounting LittleFS");
       return;
     */
 }
 
 // MARK: initPins
 void initPins() {
-    pinMode(vent_1_button, INPUT);
-    pinMode(vent_2_button, INPUT);
+    pinMode(valve_1_button, INPUT);
+    pinMode(valve_2_button, INPUT);
     pinMode(pump_button, INPUT);
     pinMode(action_button, INPUT);
 
-    pinMode(vent_1_led, OUTPUT);
-    pinMode(vent_2_led, OUTPUT);
+    pinMode(valve_1_led, OUTPUT);
+    pinMode(valve_2_led, OUTPUT);
     pinMode(pump_led, OUTPUT);
     pinMode(action_led, OUTPUT);
 
-    pinMode(vent_1_relay, OUTPUT);
-    pinMode(vent_2_relay, OUTPUT);
+    pinMode(valve_1_relay, OUTPUT);
+    pinMode(valve_2_relay, OUTPUT);
     pinMode(pump_relay, OUTPUT);
     pinMode(action_relay, OUTPUT);
 
@@ -258,8 +262,8 @@ void initPins() {
     // pinMode(data3, INPUT);
 }
 
-void handleUpload(AsyncWebServerRequest *request, String filename, size_t index,
-                  uint8_t *data, size_t len, bool final) {
+// MARK: handle FileUpload
+void handleUploadDepricated(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final) {
     // Check if the file is a .json file
     if (!filename.endsWith(".json")) {
         request->send(400, "text/plain", "Only .json files are allowed");
@@ -273,7 +277,7 @@ void handleUpload(AsyncWebServerRequest *request, String filename, size_t index,
     File file = LittleFS.open(configFilePath, "w");
     if (!index) {
         // Datei zum Schreiben öffnen
-        Serial.printf("UploadStart: %s\n", filename.c_str());
+        printFormatted("UploadStart: %s\n", filename.c_str());
         if (!file) {
             request->send(500, "text/plain", "Could not open file for writing");
             return;
@@ -287,42 +291,97 @@ void handleUpload(AsyncWebServerRequest *request, String filename, size_t index,
     file.close();
 
     if (final) {
-        Serial.printf("UploadEnd: %s, %u B\n", filename.c_str(), index + len);
-        request->send(200, "text/plain", "File upload completed");
-    }
-    if (!loadConfig(configFilePath)) {
-        Serial.println("Failed to load config file");
+        printFormatted("UploadEnd: %s, %u B\n", filename.c_str(), index + len);
+        if (!loadConfig(configFilePath)) {
+            println("Failed to read config file");
+            request->send(200, "application/json", "{\"status\":\"false\"}");
+            return;
+        }
+        request->send(200, "application/json", "{\"status\":\"true\"}");
     }
 }
 
-// MARK: Emergency
+void handleUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final) {
+    static String jsonBuffer;  // Temporärer Speicher für den gesamten JSON-Inhalt
+
+    // Überprüfen, ob die Datei eine .json-Datei ist
+    if (!filename.endsWith(".json")) {
+        request->send(400, "text/plain", "Only .json files are allowed");
+        return;
+    }
+
+    // Beim ersten Chunk den Puffer initialisieren
+    if (index == 0) {
+        jsonBuffer = "";  // Puffer leeren
+        printFormatted("UploadStart: %s\n", filename.c_str());
+    }
+
+    // Daten in den temporären Puffer laden
+    jsonBuffer += String((char*)data).substring(0, len);
+
+    // Wenn der Upload abgeschlossen ist
+    if (final) {
+        printFormatted("UploadEnd: %s, %u B\n", filename.c_str(), index + len);
+
+        // Versuchen, den JSON-Inhalt zu parsen
+        JsonDocument doc;
+        DeserializationError error = deserializeJson(doc, jsonBuffer);
+
+        if (error) {
+            printFormatted("JSON Parsing failed: %s\n", error.c_str());
+            request->send(400, "text/plain", "Invalid JSON format");
+            return;
+        }
+
+        // Speichern der Datei im Dateisystem nach erfolgreicher JSON-Verarbeitung
+        File file = LittleFS.open(configFilePath, "w");
+        if (!file) {
+            request->send(500, "text/plain", "Could not open file for writing");
+            return;
+        }
+        file.print(jsonBuffer);  // JSON-Inhalt in die Datei schreiben
+        file.close();
+
+        // Nach dem Speichern kann die Konfiguration geladen werden
+        if (!loadConfig(configFilePath)) {
+            println("Failed to read config file");
+            request->send(200, "application/json", "{\"status\":\"false\"}");
+            return;
+        }
+
+        // Erfolgsmeldung senden
+        request->send(200, "application/json", "{\"status\":\"true\"}");
+    }
+}
+
+// MARK: Emergency off
 bool handleEmergency() {
-    digitalWrite(vent_1_relay, LOW);
-    digitalWrite(vent_2_relay, LOW);
+    digitalWrite(valve_1_relay, LOW);
+    digitalWrite(valve_2_relay, LOW);
     digitalWrite(pump_relay, LOW);
     digitalWrite(action_relay, LOW);
-    digitalWrite(vent_1_led, LOW);
-    digitalWrite(vent_2_led, LOW);
+    digitalWrite(valve_1_led, LOW);
+    digitalWrite(valve_2_led, LOW);
     digitalWrite(pump_led, LOW);
     digitalWrite(action_led, LOW);
 
-    vent1State = false;
-    vent2State = false;
+    valve1State = false;
+    valve2State = false;
     pumpState = false;
     actionState = false;
 
     delay(10);
 
-    bool allLow = (vent1State == false) &&
-                  (vent2State == false) &&
+    bool allLow = (valve1State == false) &&
+                  (valve2State == false) &&
                   (pumpState == false) &&
                   (actionState == false) &&
-                  (digitalRead(vent_1_relay) == LOW) &&
-                  (digitalRead(vent_2_relay) == LOW) &&
+                  (digitalRead(valve_1_relay) == LOW) &&
+                  (digitalRead(valve_2_relay) == LOW) &&
                   (digitalRead(pump_relay) == LOW) &&
                   (digitalRead(action_relay) == LOW) &&
-                  (digitalRead(vent_1_led) == LOW) &&
-                  (digitalRead(vent_2_led) == LOW) &&
+                  (digitalRead(valve_1_led) == LOW) &&
+                  (digitalRead(valve_2_led) == LOW) &&
                   (digitalRead(pump_led) == LOW) &&
                   (digitalRead(action_led) == LOW);
 
@@ -368,13 +427,13 @@ void setup() {
     // here  "Pumpenwifi" with password "password" and goes into a blocking loop
     // awaiting configuration
     if (!wifiManager.autoConnect("Pumpenwifi", "Garten24")) {
-        Serial.println("failed to connect --- hit timeout --- rebooting ESP...");
+        println("failed to connect --- hit timeout --- rebooting ESP...");
         delay(3000);
         ESP.restart();
         delay(5000);
     }
-    Serial.printf("Connected to %s\n", WiFi.SSID().c_str());
-    Serial.println("");
+    printFormatted("Connected to %s\n", WiFi.SSID().c_str());
+    println("");
 
     initLittleFS();
     initPins();
@@ -383,13 +442,13 @@ void setup() {
     loadConfig(configFilePath);
 
     // Print ESP Local IP Address
-    Serial.println("WiFi connected");
-    Serial.print("IP address: ");
-    Serial.println(WiFi.localIP());
+    println("WiFi connected");
+    print("IP address: ");
+    println(String(WiFi.localIP()));
     // sets a custom hostname for website
     WiFi.setHostname(config.network.HOSTNAME.c_str());
-    Serial.print("Hostname: ");
-    Serial.println(WiFi.getHostname());
+    print("Hostname: ");
+    println(WiFi.getHostname());
 
     config.network.SSID = WiFi.SSID().c_str();
     saveConfig(configFilePath);
@@ -398,7 +457,7 @@ void setup() {
     // server.on("/download", HTTP_GET, [](AsyncWebServerRequest *request)
     //          { request->send(LittleFS, "/config.json", String(), true); });
     server.on("/download", HTTP_GET, [](AsyncWebServerRequest *request) {
-        Serial.println("Download config file");
+        println("Download config file");
         request->send(LittleFS, configFilePath, String(), true);
     });
 
@@ -408,25 +467,25 @@ void setup() {
     // define Emergency-Handler
     server.on("/emergency", HTTP_GET, [](AsyncWebServerRequest *request) {
         bool result = handleEmergency();
-        Serial.println("Emergency shutoff initiated");
+        println("Emergency shutoff initiated");
         if (result) {
-            Serial.println("Emergency shutoff successful");
+            println("Emergency shutoff successful");
         } else {
-            Serial.println("Emergency shutoff failed, retrying...");
+            println("Emergency shutoff failed, retrying...");
             handleEmergency();
         }
         request->send(200, "text/plain", "emergency initiated! Success: " + result);
     });
 
     server.on("/restart", HTTP_GET, [](AsyncWebServerRequest *request) {
-        Serial.println("rebooting initiated");
+        println("rebooting initiated");
         request->send(200, "application/json", "{\"status\":\"true\"}");
         reboot();
     });
 
     server.on("/reset", HTTP_GET, [](AsyncWebServerRequest *request) {
         bool result = resetConfig();
-        Serial.println("Reset initiated: Success: " + String(result));
+        println("Reset initiated: Success: " + String(result));
         request->send(200, "text/plain", "Reset initiated! Success: " + String(result));
     });
 
@@ -466,7 +525,7 @@ void setup() {
                 break;
             }
 
-            Serial.println("Timer data received");
+            println("Timer data received");
 
             request->send(200, "application/json", "{\"status\":\"true\"}"); });
 
@@ -481,7 +540,7 @@ void setup() {
         String response;
         serializeJson(doc, response);
         request->send(200, "application/json", response);
-        Serial.println("Timer data send");
+        println("Timer data send");
     });
 
     // Handle stop timers
@@ -492,12 +551,12 @@ void setup() {
         setTimer2Active = false;
 
         pumpState = false;
-        vent1State = false;
-        vent2State = false;
+        valve1State = false;
+        valve2State = false;
         actionState = false;
 
         request->send(200, "application/json", "{\"status\":\"true\"}");
-        Serial.println("All timers stopped");
+        println("All timers stopped");
     });
 
     // Handle POST request to set timeclock
@@ -547,7 +606,7 @@ void setup() {
             config.SUN.TIME.TIMER_2 = doc["sunday"]["timer2"];
 
             request->send(200, "application/json", "{\"status\":\"true\"}");
-            Serial.println("Timetable data received"); });
+            println("Timetable data received"); });
 
     // Handle GET request to get timeclock settings
     server.on("/get-timeclock", HTTP_GET, [](AsyncWebServerRequest *request) {
@@ -591,7 +650,7 @@ void setup() {
         String response;
         serializeJson(doc, response);
         request->send(200, "application/json", response);
-        Serial.println("Timetable data send");
+        println("Timetable data send");
     });
 
     // Main page handlers
@@ -614,25 +673,25 @@ void setup() {
         if (timer1Active) {
             doc["kreis1_timer"] =
                 "Aktiv: " + String(config.TIMER.DURATION) +
-                " min bis: " + convertTimeToString(vent1EndTime);
+                " min bis: " + convertTimeToString(valve1EndTime);
         } else if (setTimer1Active && config.TIMER.Time_EN && (timerTyp == 1 || timerTyp == 3)) {
             doc["kreis1_timer"] =
                 "Aktiv ab: " + convertTimeToString(config.TIMER.TIME) +
                 " für " + String(config.TIMER.DURATION) +
-                " min bis: " + convertTimeToString(vent1EndTime);
+                " min bis: " + convertTimeToString(valve1EndTime);
         } else {
             doc["kreis1_timer"] = "Timer nicht aktiv";
         }
         if (timer2Active) {
             doc["kreis2_timer"] =
                 "Aktiv: " + String(config.TIMER.DURATION) +
-                " min bis: " + convertTimeToString(vent2EndTime);
+                " min bis: " + convertTimeToString(valve2EndTime);
         } else if (setTimer2Active && config.TIMER.Time_EN && (timerTyp == 2 || timerTyp == 3)) {
             if (timerTyp == 2) {
                 doc["kreis2_timer"] =
                     "Aktiv ab: " + convertTimeToString(config.TIMER.TIME) +
                     " für " + String(config.TIMER.DURATION) +
-                    " min bis: " + convertTimeToString(vent2EndTime);
+                    " min bis: " + convertTimeToString(valve2EndTime);
             } else {
                 doc["kreis2_timer"] =
                     "Aktiv ab: " + convertTimeToString(calculateTime(config.TIMER.TIME, config.TIMER.DURATION)) +
@@ -643,8 +702,8 @@ void setup() {
             doc["kreis2_timer"] = "Timer nicht aktiv";
         }
 
-        doc["vent1_button"] = vent1State;
-        doc["vent2_button"] = vent2State;
+        doc["valve1_button"] = valve1State;
+        doc["valve2_button"] = valve2State;
         doc["pump_button"] = pumpState;
 
         doc["time_control"] = config.AUTOMATIC_MODE;
@@ -680,48 +739,47 @@ void setup() {
 
     server.on("/activateAutoMode", HTTP_GET, [](AsyncWebServerRequest *request) {
         config.AUTOMATIC_MODE = !config.AUTOMATIC_MODE;
-        Serial.println("Automatic mode set to: " + String(config.AUTOMATIC_MODE ? "true" : "false"));
+        println("Automatic mode set to: " + String(config.AUTOMATIC_MODE ? "true" : "false"));
         request->send(200, "application/json", "{\"status\":" + String(config.AUTOMATIC_MODE ? "true" : "false") + "}");
     });
     server.on("/activateRain", HTTP_GET, [](AsyncWebServerRequest *request) {
         config.PRECIPITATION_MODE = !config.PRECIPITATION_MODE;
-        Serial.println("Evaluate rain mode set to: " + String(config.PRECIPITATION_MODE ? "true" : "false"));
+        println("Evaluate rain mode set to: " + String(config.PRECIPITATION_MODE ? "true" : "false"));
         request->send(200, "application/json", "{\"status\":" + String(config.PRECIPITATION_MODE ? "true" : "false") + "}");
     });
     server.on("/activateRainForecast", HTTP_GET, [](AsyncWebServerRequest *request) {
         config.PRECIPITATION_MODE_FORECAST = !config.PRECIPITATION_MODE_FORECAST;
-        Serial.println("Evaluate rain forecast mode set to: " + String(config.PRECIPITATION_MODE_FORECAST ? "true" : "false"));
+        println("Evaluate rain forecast mode set to: " + String(config.PRECIPITATION_MODE_FORECAST ? "true" : "false"));
         request->send(200, "application/json", "{\"status\":" + String(config.PRECIPITATION_MODE_FORECAST ? "true" : "false") + "}");
     });
     server.on("/mentionSunset", HTTP_GET, [](AsyncWebServerRequest *request) {
         config.MENTION_SUNSET = !config.MENTION_SUNSET;
-        Serial.println("Mention sunset mode set to: " + String(config.MENTION_SUNSET ? "true" : "false"));
+        println("Mention sunset mode set to: " + String(config.MENTION_SUNSET ? "true" : "false"));
         request->send(200, "application/json", "{\"status\":" + String(config.MENTION_SUNSET ? "true" : "false") + "}");
     });
 
     server.on("/togglePump", HTTP_GET, [](AsyncWebServerRequest *request) {
         pumpState = !pumpState;
         pumpStartTime = pumpState ? getCurrentTimeInt() : -1;
-        Serial.println("Pump set to: " + String(pumpState ? "active" : "off"));
+        println("Pump set to: " + String(pumpState ? "active" : "off"));
         request->send(200, "application/json", "{\"status\":" + String(pumpState ? "true" : "false") + "}");
     });
-    server.on("/toggleVent1", HTTP_GET, [](AsyncWebServerRequest *request) {
-        vent1State = !vent1State;
-        vent1StartTime = vent1State ? getCurrentTimeInt() : -1;
-        Serial.println("Vent1 set to: " + String(vent1State ? "active" : "off"));
-        request->send(200, "application/json", "{\"status\":" + String(vent1State ? "true" : "false") + "}");
+    server.on("/toggleValve1", HTTP_GET, [](AsyncWebServerRequest *request) {
+        valve1State = !valve1State;
+        valve1StartTime = valve1State ? getCurrentTimeInt() : -1;
+        println("Valve1 set to: " + String(valve1State ? "active" : "off"));
+        request->send(200, "application/json", "{\"status\":" + String(valve1State ? "true" : "false") + "}");
     });
-    server.on("/toggleVent2", HTTP_GET, [](AsyncWebServerRequest *request) {
-        vent2State = !vent2State;
-        vent2StartTime = vent2State ? getCurrentTimeInt() : -1;
-        Serial.println("Vent2 set to: " + String(vent2State ? "active" : "off"));
-        request->send(200, "application/json", "{\"status\":" + String(vent2State ? "true" : "false") + "}");
+    server.on("/toggleValve2", HTTP_GET, [](AsyncWebServerRequest *request) {
+        valve2State = !valve2State;
+        valve2StartTime = valve2State ? getCurrentTimeInt() : -1;
+        println("Valve2 set to: " + String(valve2State ? "active" : "off"));
+        request->send(200, "application/json", "{\"status\":" + String(valve2State ? "true" : "false") + "}");
     });
 
     // settings endpoints
     // MARK: settings
     server.on("/settings", HTTP_GET, [](AsyncWebServerRequest *request) {
-        String json;
         JsonDocument doc;
 
         doc["ntp"] = config.network.NTP_SERVER;
@@ -730,23 +788,24 @@ void setup() {
         doc["precipitation_level"] = config.PRECIPITATION_AMOUNT;
         doc["precipitation_level_forecast"] = config.PRECIPITATION_AMOUNT_FORECAST;
         doc["max_pump_time"] = config.MAX_PUMP_TIME;
-        doc["max_vent1_time"] = config.MAX_VENT1_TIME;
-        doc["max_vent2_time"] = config.MAX_VENT2_TIME;
+        doc["max_valve1_time"] = config.MAX_VALVE1_TIME;
+        doc["max_valve2_time"] = config.MAX_VALVE2_TIME;
         doc["weather_channel"] = config.weather.weatherChannel;
         doc["longitude"] = config.weather.LONGITUDE;
         doc["latitude"] = config.weather.LATITUDE;
         doc["rain_duration_past"] = config.weather.DURATION_PAST;
         doc["rain_duration_forecast"] = config.weather.DURATION_FORECAST;
-        doc["openweather_api_key"] = config.weather.API_KEY;
+        doc["api_key"] = config.weather.API_KEY;
 
         if (config.weather.weatherChannel == "metehomatics") {
             doc["metehomatics_user"] = config.weather.METHEO_USERNAME;
             doc["metehomatics_password"] = config.weather.METHEO_PASSWORD;
         }
 
+        String json;
         serializeJson(doc, json);
         request->send(200, "application/json", json);
-        Serial.println("Settings data send");
+        println("Settings data send");
     });
 
     server.on("/settings", HTTP_POST, [](AsyncWebServerRequest *request) {}, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
@@ -757,26 +816,39 @@ void setup() {
                           "{\"status\":\"error\", \"message\":\"Invalid JSON\"}");
             return;
         }
+        println("Settings data received");
+
         if (doc.containsKey("zeitserver")) {
             config.network.NTP_SERVER = doc["zeitserver"].as<String>();
+            while (!syncTimeWithNTP()) {
+                println("Failed to sync time with NTP server. Trying again in a second...");
+                delay(1000);
+            }
+            println("NTP server set to: " + config.network.NTP_SERVER);
         }
         if (doc.containsKey("wifi_ssid")) {
             config.network.SSID = doc["wifi_ssid"].as<String>();
         }
         if (doc.containsKey("wifi_pw")) {
             config.network.PASSWORD = doc["wifi_pw"].as<String>();
+            println("New wifi credentials set");
         }
         if (doc.containsKey("hostname")) {
             config.network.HOSTNAME = doc["hostname"].as<String>();
+            WiFi.setHostname(config.network.HOSTNAME.c_str());
+            println("Hostname set to: " + config.network.HOSTNAME);
         }
         if (doc.containsKey("precipitation_level")) {
             config.PRECIPITATION_AMOUNT = doc["precipitation_level"];
+            println("Precipitation level set to: " + String(config.PRECIPITATION_AMOUNT));
         }
         if (doc.containsKey("precipitation_level_forecast")) {
             config.PRECIPITATION_AMOUNT_FORECAST = doc["precipitation_level_forecast"];
+            println("Precipitation level forecast set to: " + String(config.PRECIPITATION_AMOUNT_FORECAST));
         }
         if (doc.containsKey("weather_channel")) {
             config.weather.weatherChannel = doc["weather_channel"].as<String>();
+            println("Weather channel set to: " + config.weather.weatherChannel);
         }
         if (doc.containsKey("longitude")) {
             config.weather.LONGITUDE = doc["longitude"];
@@ -790,30 +862,31 @@ void setup() {
         if (doc.containsKey("rain_duration_forecast")) {
             config.weather.DURATION_FORECAST = doc["rain_duration_forecast"];
         }
-        if (config.weather.weatherChannel == "openweather") {
-            if (doc.containsKey("api_key")) {
-                config.weather.API_KEY = doc["api_key"].as<String>();
+        if (doc.containsKey("api_key")) {
+            config.weather.API_KEY = doc["api_key"].as<String>();
+            println("Weather settings set");
+        }
+        if (config.weather.weatherChannel == "metehomatics") {
+            if (doc.containsKey("metheo_user")) {
+                config.weather.METHEO_USERNAME = doc["metheo_user"].as<String>();
             }
-        } else if (config.weather.weatherChannel == "metehomatics") {
-            if (doc.containsKey("meteho_user")) {
-                config.weather.METHEO_USERNAME = doc["meteho_user"].as<String>();
-            }
-            if (doc.containsKey("meteho_pw")) {
-                config.weather.METHEO_PASSWORD = doc["meteho_pw"].as<String>();
+            if (doc.containsKey("metheo_pw")) {
+                config.weather.METHEO_PASSWORD = doc["metheo_pw"].as<String>();
             }
         }
         if (doc.containsKey("max_pump_time")) {
             config.MAX_PUMP_TIME = doc["max_pump_time"];
         }
-        if (doc.containsKey("max_vent1_time")) {
-            config.MAX_VENT1_TIME = doc["max_vent1_time"];
+        if (doc.containsKey("max_valve1_time")) {
+            config.MAX_VALVE1_TIME = doc["max_valve1_time"];
         }
-        if (doc.containsKey("max_vent2_time")) {
-            config.MAX_VENT2_TIME = doc["max_vent2_time"];
+        if (doc.containsKey("max_valve2_time")) {
+            config.MAX_VALVE2_TIME = doc["max_valve2_time"];
+            println("Max times set");
         }
         saveConfig(configFilePath);
         request->send(200, "application/json", "{\"status\":\"true\"}");
-        Serial.println("Settings data received"); });
+     });
 
     // send esp chip info for nerds
     // MARK: chip-info
@@ -868,7 +941,7 @@ void setup() {
         String json;
         serializeJson(doc, json);
         request->send(200, "application/json", json);
-        Serial.println("Chip info send");
+        println("Chip info send");
     });
 
     // MARK: serve index
@@ -882,6 +955,7 @@ void setup() {
     ElegantOTA.begin(&server); // Start ElegantOTA
     WebSerial.begin(&server);  // Initialize WebSerial
 
+    //MARK: WebSerial
     // Attach a callback function to handle incoming messages
     WebSerial.onMessage([](uint8_t *data, size_t len) {
         Serial.printf("Received %lu bytes from WebSerial: ", len);
@@ -889,43 +963,43 @@ void setup() {
         Serial.println();
         WebSerial.println("Received Data...");
         String d = "";
-        for (size_t i = 0; i < len; i++) {
-            d += char(data[i]);
+        for(size_t i = 0; i < len; i++){
+          d += char(data[i]);
         }
         WebSerial.println(d);
-    });
+      });
 
     server.onNotFound(notFound);
     server.begin();
 
     // Setup rtc time
     while (!syncTimeWithNTP()) {
-        Serial.println("Failed to sync time with NTP server. Trying again in a second...");
+        println("Failed to sync time with NTP server. Trying again in a second...");
         delay(1000);
     }
 }
 
 // MARK: Security Check
 void securityCheck() {
-    if (vent1State && calculateSecurityCheck(vent1StartTime, config.MAX_VENT1_TIME)) {
-        vent1State = false;
-        vent1StartTime = -1;
-        Serial.println("Max Vent1 Time reached. Turned off for security reasons");
+    if (valve1State && calculateSecurityCheck(valve1StartTime, config.MAX_VALVE1_TIME)) {
+        valve1State = false;
+        valve1StartTime = -1;
+        println("Max Valve1 Time reached. Turned off for security reasons");
     }
-    if (vent2State && calculateSecurityCheck(vent2StartTime, config.MAX_VENT2_TIME)) {
-        vent2State = false;
-        vent2StartTime = -1;
-        Serial.println("Max Vent2 Time reached. Turned off for security reasons");
+    if (valve2State && calculateSecurityCheck(valve2StartTime, config.MAX_VALVE2_TIME)) {
+        valve2State = false;
+        valve2StartTime = -1;
+        println("Max Valve2 Time reached. Turned off for security reasons");
     }
     if (pumpState && calculateSecurityCheck(pumpStartTime, config.MAX_PUMP_TIME)) {
         pumpState = false;
         pumpStartTime = -1;
-        Serial.println("Max Pump Time reached. Turned off for security reasons");
+        println("Max Pump Time reached. Turned off for security reasons");
     }
     // if (actionState && calculateSecurityCheck(actionStartTime, config.MAX_ACTION_TIME)) {
     //     actionState = false;
     //     actionStartTime = -1;
-    //      Serial.println("Max Action Time reached. Turned off for security reasons");
+    //      println("Max Action Time reached. Turned off for security reasons");
     // }
 }
 
@@ -934,128 +1008,128 @@ void TimerLogic() {
     if (setTimer1Active || setTimer2Active) {
         if (config.TIMER.Time_EN) {
             TimerLogicActive = true;
-            // Serial.println("Timer on time logic active");
-            if (setTimer1Active && !vent1State && config.TIMER.DURATION > 0) {
-                vent1EndTime = calculateTime(config.TIMER.TIME, config.TIMER.DURATION);
-                if (isTimeSlot(config.TIMER.TIME, vent1EndTime)) {
+            // println("Timer on time logic active");
+            if (setTimer1Active && !valve1State && config.TIMER.DURATION > 0) {
+                valve1EndTime = calculateTime(config.TIMER.TIME, config.TIMER.DURATION);
+                if (isTimeSlot(config.TIMER.TIME, valve1EndTime)) {
                     pumpState = true;
                     pumpStartTime = getCurrentTimeInt();
-                    vent1State = true;
-                    vent1StartTime = getCurrentTimeInt();
+                    valve1State = true;
+                    valve1StartTime = getCurrentTimeInt();
                     timer1Active = true;
                     setTimer1Active = false;
                     alreadyPrinted1 = false;
-                    Serial.println("Timer valve 1 is active for: " + String(config.TIMER.DURATION) + " min until: " + convertTimeToString(vent1EndTime));
+                    println("Timer valve 1 is active for: " + String(config.TIMER.DURATION) + " min until: " + convertTimeToString(valve1EndTime));
                 } else if (!alreadyPrinted1) {
-                    Serial.println(
+                    println(
                         "Timer 1 activ at: " + convertTimeToString(config.TIMER.TIME) +
                         " for " + String(config.TIMER.DURATION) +
-                        " min until: " + convertTimeToString(vent1EndTime));
+                        " min until: " + convertTimeToString(valve1EndTime));
                     alreadyPrinted1 = true;
                 }
 
-            } else if (setTimer2Active && !setTimer1Active && !vent2State && !vent1State && config.TIMER.DURATION > 0) {
-                vent2EndTime = calculateTime(config.TIMER.TIME, config.TIMER.DURATION);
-                if (isTimeSlot(config.TIMER.TIME, vent2EndTime)) {
+            } else if (setTimer2Active && !setTimer1Active && !valve2State && !valve1State && config.TIMER.DURATION > 0) {
+                valve2EndTime = calculateTime(config.TIMER.TIME, config.TIMER.DURATION);
+                if (isTimeSlot(config.TIMER.TIME, valve2EndTime)) {
                     pumpState = true;
                     pumpStartTime = getCurrentTimeInt();
-                    vent2State = true;
-                    vent2StartTime = getCurrentTimeInt();
+                    valve2State = true;
+                    valve2StartTime = getCurrentTimeInt();
                     timer2Active = true;
                     setTimer2Active = false;
                     alreadyPrinted2 = false;
-                    Serial.println("Timer valve 2 is active for: " + String(config.TIMER.DURATION) + " min until: " + convertTimeToString(vent2EndTime));
+                    println("Timer valve 2 is active for: " + String(config.TIMER.DURATION) + " min until: " + convertTimeToString(valve2EndTime));
                 } else if (!alreadyPrinted2) {
-                    Serial.println(
+                    println(
                         "Timer 2 activ at: " + convertTimeToString(config.TIMER.TIME) +
                         " for " + String(config.TIMER.DURATION) +
-                        " min until: " + convertTimeToString(vent1EndTime));
+                        " min until: " + convertTimeToString(valve1EndTime));
                     alreadyPrinted2 = true;
                 }
             }
 
             if (config.TIMER.ALL) {
                 if (!alreadyPrinted2) {
-                    Serial.println(
+                    println(
                         "Timer 2 activ at: " + convertTimeToString(config.TIMER.TIME + config.TIMER.DURATION) +
                         " for " + String(config.TIMER.DURATION) +
                         " min until: " + convertTimeToString(config.TIMER.TIME + (2 * config.TIMER.DURATION)));
                     alreadyPrinted2 = true;
                 }
-                if (vent1State && (currentTime >= vent1EndTime)) {
-                    vent1State = false;
+                if (valve1State && (currentTime >= valve1EndTime)) {
+                    valve1State = false;
                     timer1Active = false;
-                    vent1StartTime = -1;
-                    Serial.println("Timer valve 1 ended");
+                    valve1StartTime = -1;
+                    println("Timer valve 1 ended");
                     if (config.TIMER.DURATION > 0) {
-                        vent2EndTime = calculateTime(currentTime, config.TIMER.DURATION);
-                        vent2State = true;
-                        vent2StartTime = getCurrentTimeInt();
+                        valve2EndTime = calculateTime(currentTime, config.TIMER.DURATION);
+                        valve2State = true;
+                        valve2StartTime = getCurrentTimeInt();
                         timer2Active = true;
                         setTimer2Active = false;
                         alreadyPrinted2 = false;
-                        Serial.println("Timer valve 2 is active for: " + String(config.TIMER.DURATION) + " min until: " + convertTimeToString(vent2EndTime));
+                        println("Timer valve 2 is active for: " + String(config.TIMER.DURATION) + " min until: " + convertTimeToString(valve2EndTime));
                     }
                 }
             }
         } else {
             TimerLogicActive = true;
-            Serial.println("Timer logic active");
-            if (setTimer1Active && !vent1State && config.TIMER.DURATION > 0) {
-                vent1EndTime = calculateTime(currentTime, config.TIMER.DURATION);
+            println("Timer logic active");
+            if (setTimer1Active && !valve1State && config.TIMER.DURATION > 0) {
+                valve1EndTime = calculateTime(currentTime, config.TIMER.DURATION);
                 pumpState = true;
                 pumpStartTime = getCurrentTimeInt();
-                vent1State = true;
-                vent1StartTime = getCurrentTimeInt();
+                valve1State = true;
+                valve1StartTime = getCurrentTimeInt();
                 timer1Active = true;
                 setTimer1Active = false;
-                Serial.println("Timer valve 1 is active for: " + String(config.TIMER.DURATION) + " min until: " + convertTimeToString(vent1EndTime));
-            } else if (setTimer2Active && !setTimer1Active && !vent2State && !vent1State && config.TIMER.DURATION > 0) {
-                vent2EndTime = calculateTime(currentTime, config.TIMER.DURATION);
+                println("Timer valve 1 is active for: " + String(config.TIMER.DURATION) + " min until: " + convertTimeToString(valve1EndTime));
+            } else if (setTimer2Active && !setTimer1Active && !valve2State && !valve1State && config.TIMER.DURATION > 0) {
+                valve2EndTime = calculateTime(currentTime, config.TIMER.DURATION);
                 pumpState = true;
                 pumpStartTime = getCurrentTimeInt();
-                vent2State = true;
-                vent2StartTime = getCurrentTimeInt();
+                valve2State = true;
+                valve2StartTime = getCurrentTimeInt();
                 timer2Active = true;
                 setTimer2Active = false;
-                Serial.println("Timer valve 2 is active for: " + String(config.TIMER.DURATION) + " min until: " + convertTimeToString(vent2EndTime));
+                println("Timer valve 2 is active for: " + String(config.TIMER.DURATION) + " min until: " + convertTimeToString(valve2EndTime));
             }
 
             if (config.TIMER.ALL) {
-                if (vent1State && (currentTime >= vent1EndTime)) {
+                if (valve1State && (currentTime >= valve1EndTime)) {
                     timer1Active = false;
-                    vent1State = false;
-                    vent1StartTime = -1;
-                    Serial.println("Timer valve 1 ended");
+                    valve1State = false;
+                    valve1StartTime = -1;
+                    println("Timer valve 1 ended");
                     if (config.TIMER.DURATION > 0) {
-                        vent2EndTime = calculateTime(currentTime, config.TIMER.DURATION);
-                        vent2State = true;
-                        vent2StartTime = getCurrentTimeInt();
+                        valve2EndTime = calculateTime(currentTime, config.TIMER.DURATION);
+                        valve2State = true;
+                        valve2StartTime = getCurrentTimeInt();
                         timer2Active = true;
                         setTimer2Active = false;
-                        Serial.println("Timer valve 2 is active for: " + String(config.TIMER.DURATION) + " min until: " + convertTimeToString(vent2EndTime));
+                        println("Timer valve 2 is active for: " + String(config.TIMER.DURATION) + " min until: " + convertTimeToString(valve2EndTime));
                     }
                 }
             }
         }
     } else if (TimerLogicActive) {
 
-        if (vent1State && (currentTime >= vent1EndTime)) {
-            vent1State = false;
+        if (valve1State && (currentTime >= valve1EndTime)) {
+            valve1State = false;
             timer1Active = false;
-            vent1StartTime = -1;
+            valve1StartTime = -1;
             pumpState = false;
             pumpStartTime = -1;
             TimerLogicActive = false;
-            Serial.println("Timer valve 1 ended");
-        } else if (vent2State && (currentTime >= vent2EndTime)) {
-            vent2State = false;
+            println("Timer valve 1 ended");
+        } else if (valve2State && (currentTime >= valve2EndTime)) {
+            valve2State = false;
             timer2Active = false;
-            vent2StartTime = -1;
+            valve2StartTime = -1;
             pumpState = false;
             pumpStartTime = -1;
             TimerLogicActive = false;
-            Serial.println("Timer valve 2 ended");
+            println("Timer valve 2 ended");
         }
     }
 }
@@ -1097,103 +1171,103 @@ void TimetableLogic() {
             if (config.AUTOMATIC_MODE) {
                 if (config.PRECIPITATION_MODE) {
                     if (calculatedRain24h > config.PRECIPITATION_AMOUNT) {
-                        Serial.println("Past rain amount over limit, no watering: " + String(calculatedRain24h) + "mm");
+                        println("Past rain amount over limit, no watering: " + String(calculatedRain24h) + "mm");
                         return;
                     }
                 }
                 if (config.PRECIPITATION_MODE_FORECAST) {
                     if (rainForecast > config.PRECIPITATION_AMOUNT_FORECAST) {
-                        Serial.println("Forecast rain amount over limit, no watering: " + String(rainForecast) + "mm");
+                        println("Forecast rain amount over limit, no watering: " + String(rainForecast) + "mm");
                         return;
                     }
                 }
 
                 if (config.MENTION_SUNSET) {
                     if (!(dayConfig->TIME.ON_TIME < sunsetTime)) {
-                        if (!vent1State && dayConfig->TIME.TIMER_1 > 0) {
-                            vent1EndTime = calculateTime(currentTime, dayConfig->TIME.TIMER_1);
-                            if (isTimeSlot(currentTime, vent1EndTime)) {
+                        if (!valve1State && dayConfig->TIME.TIMER_1 > 0) {
+                            valve1EndTime = calculateTime(currentTime, dayConfig->TIME.TIMER_1);
+                            if (isTimeSlot(currentTime, valve1EndTime)) {
                                 pumpState = true;
                                 pumpStartTime = getCurrentTimeInt();
-                                vent1State = true;
-                                vent1StartTime = getCurrentTimeInt();
-                                Serial.println("Turned valve 1 on due to sunset");
+                                valve1State = true;
+                                valve1StartTime = getCurrentTimeInt();
+                                println("Turned valve 1 on due to sunset");
                             }
 
-                        } else if (!vent2State && !vent1State && dayConfig->TIME.TIMER_2 > 0) {
-                            vent2EndTime = calculateTime(currentTime, dayConfig->TIME.TIMER_2);
-                            if (isTimeSlot(currentTime, vent2EndTime)) {
+                        } else if (!valve2State && !valve1State && dayConfig->TIME.TIMER_2 > 0) {
+                            valve2EndTime = calculateTime(currentTime, dayConfig->TIME.TIMER_2);
+                            if (isTimeSlot(currentTime, valve2EndTime)) {
                                 pumpState = true;
                                 pumpStartTime = getCurrentTimeInt();
-                                vent2State = true;
-                                vent2StartTime = getCurrentTimeInt();
-                                Serial.println("Turned valve 2 on due to sunset");
+                                valve2State = true;
+                                valve2StartTime = getCurrentTimeInt();
+                                println("Turned valve 2 on due to sunset");
                             }
                         }
 
-                        if (vent1State && (currentTime >= vent1EndTime)) {
-                            vent1State = false;
-                            vent1StartTime = -1;
-                            Serial.println("Turned valve 1 off");
+                        if (valve1State && (currentTime >= valve1EndTime)) {
+                            valve1State = false;
+                            valve1StartTime = -1;
+                            println("Turned valve 1 off");
                             if (dayConfig->TIME.TIMER_2 > 0) {
-                                vent2EndTime = calculateTime(currentTime, dayConfig->TIME.TIMER_2);
-                                vent2State = true;
-                                vent2StartTime = getCurrentTimeInt();
+                                valve2EndTime = calculateTime(currentTime, dayConfig->TIME.TIMER_2);
+                                valve2State = true;
+                                valve2StartTime = getCurrentTimeInt();
                             } else {
                                 pumpState = false;
                                 pumpStartTime = -1;
-                                Serial.println("Turned pump off");
+                                println("Turned pump off");
                             }
-                        } else if (vent2State && (currentTime >= vent2EndTime)) {
-                            vent2State = false;
-                            vent2StartTime = -1;
+                        } else if (valve2State && (currentTime >= valve2EndTime)) {
+                            valve2State = false;
+                            valve2StartTime = -1;
                             pumpState = false;
                             pumpStartTime = -1;
-                            Serial.println("Turned valve 2 and pump off");
+                            println("Turned valve 2 and pump off");
                         }
                     }
                 }
 
-                if (!vent1State && dayConfig->TIME.TIMER_1 > 0) {
-                    vent1EndTime = calculateTime(dayConfig->TIME.ON_TIME, dayConfig->TIME.TIMER_1);
-                    if (isTimeSlot(dayConfig->TIME.ON_TIME, vent1EndTime)) {
+                if (!valve1State && dayConfig->TIME.TIMER_1 > 0) {
+                    valve1EndTime = calculateTime(dayConfig->TIME.ON_TIME, dayConfig->TIME.TIMER_1);
+                    if (isTimeSlot(dayConfig->TIME.ON_TIME, valve1EndTime)) {
                         pumpState = true;
                         pumpStartTime = getCurrentTimeInt();
-                        vent1State = true;
-                        vent1StartTime = getCurrentTimeInt();
-                        Serial.println("Turned valve 1 on due to timetable");
+                        valve1State = true;
+                        valve1StartTime = getCurrentTimeInt();
+                        println("Turned valve 1 on due to timetable");
                     }
 
-                } else if (!vent2State && !vent1State && dayConfig->TIME.TIMER_2 > 0) {
-                    vent2EndTime = calculateTime(dayConfig->TIME.ON_TIME, dayConfig->TIME.TIMER_2);
-                    if (isTimeSlot(dayConfig->TIME.ON_TIME, vent2EndTime)) {
+                } else if (!valve2State && !valve1State && dayConfig->TIME.TIMER_2 > 0) {
+                    valve2EndTime = calculateTime(dayConfig->TIME.ON_TIME, dayConfig->TIME.TIMER_2);
+                    if (isTimeSlot(dayConfig->TIME.ON_TIME, valve2EndTime)) {
                         pumpState = true;
                         pumpStartTime = getCurrentTimeInt();
-                        vent2State = true;
-                        vent2StartTime = getCurrentTimeInt();
-                        Serial.println("Turned valve 2 on due to timetable");
+                        valve2State = true;
+                        valve2StartTime = getCurrentTimeInt();
+                        println("Turned valve 2 on due to timetable");
                     }
                 }
 
-                if (vent1State && (currentTime >= vent1EndTime)) {
-                    vent1State = false;
-                    vent1StartTime = -1;
-                    Serial.println("Turned valve 1 off");
+                if (valve1State && (currentTime >= valve1EndTime)) {
+                    valve1State = false;
+                    valve1StartTime = -1;
+                    println("Turned valve 1 off");
                     if (dayConfig->TIME.TIMER_2 > 0) {
-                        vent2EndTime = calculateTime(currentTime, dayConfig->TIME.TIMER_2);
-                        vent2State = true;
-                        vent2StartTime = getCurrentTimeInt();
+                        valve2EndTime = calculateTime(currentTime, dayConfig->TIME.TIMER_2);
+                        valve2State = true;
+                        valve2StartTime = getCurrentTimeInt();
                     } else {
                         pumpState = false;
                         pumpStartTime = -1;
-                        Serial.println("Turned pump off");
+                        println("Turned pump off");
                     }
-                } else if (vent2State && (currentTime >= vent2EndTime)) {
-                    vent2State = false;
-                    vent2StartTime = -1;
+                } else if (valve2State && (currentTime >= valve2EndTime)) {
+                    valve2State = false;
+                    valve2StartTime = -1;
                     pumpState = false;
                     pumpStartTime = -1;
-                    Serial.println("Turned valve 2 and pump off");
+                    println("Turned valve 2 and pump off");
                 }
             }
         }
@@ -1202,39 +1276,39 @@ void TimetableLogic() {
 
 // MARK: checkButtons
 void checkButtons() {
-    // Vent 1 Button
-    int readVent1 = digitalRead(vent_1_button);
-    if (readVent1 != lastVent1State) {
-        lastVent1DebounceTime = millis();
+    // Valve 1 Button
+    int readValve1 = digitalRead(valve_1_button);
+    if (readValve1 != lastValve1State) {
+        lastValve1DebounceTime = millis();
     }
-    if ((millis() - lastVent1DebounceTime) > debounceDelay) {
-        if (readVent1 != Vent1ButtonState) {
-            Vent1ButtonState = readVent1;
+    if ((millis() - lastValve1DebounceTime) > debounceDelay) {
+        if (readValve1 != Valve1ButtonState) {
+            Valve1ButtonState = readValve1;
 
-            if (Vent1ButtonState == LOW) {
-                vent1State = !vent1State;
-                Serial.println("Button pressed: " + vent1State ? "Valve 1 is on" : "Vent 1 is off");
+            if (Valve1ButtonState == LOW) {
+                valve1State = !valve1State;
+                println("Button pressed: " + String(valve1State ? "Valve 1 is on" : "Valve 1 is off"));
             }
         }
     }
-    lastVent1State = readVent1;
+    lastValve1State = readValve1;
 
-    // Vent 2 Button
-    int readVent2 = digitalRead(vent_2_button);
-    if (readVent2 != lastVent2State) {
-        lastVent2DebounceTime = millis();
+    // Valve 2 Button
+    int readValve2 = digitalRead(valve_2_button);
+    if (readValve2 != lastValve2State) {
+        lastValve2DebounceTime = millis();
     }
-    if ((millis() - lastVent2DebounceTime) > debounceDelay) {
-        if (readVent2 != Vent2ButtonState) {
-            Vent2ButtonState = readVent2;
+    if ((millis() - lastValve2DebounceTime) > debounceDelay) {
+        if (readValve2 != Valve2ButtonState) {
+            Valve2ButtonState = readValve2;
 
-            if (Vent2ButtonState == LOW) {
-                vent2State = !vent2State;
-                Serial.println("Button pressed: " + vent2State ? "Valve 2 is on" : "Vent 2 is off");
+            if (Valve2ButtonState == LOW) {
+                valve2State = !valve2State;
+                println("Button pressed: " + String(valve2State ? "Valve 2 is on" : "Valve 2 is off"));
             }
         }
     }
-    lastVent2State = readVent2;
+    lastValve2State = readValve2;
 
     // Pump Button
     int readPump = digitalRead(pump_button);
@@ -1247,7 +1321,7 @@ void checkButtons() {
 
             if (PumpButtonState == LOW) {
                 pumpState = !pumpState;
-                Serial.println("Button pressed: " + pumpState ? "Pump is on" : "Pump is off");
+                println("Button pressed: " + String(pumpState ? "Pump is on" : "Pump is off"));
             }
         }
     }
@@ -1264,7 +1338,7 @@ void checkButtons() {
 
             if (ActionButtonState == LOW) {
                 actionState = !actionState;
-                Serial.println("Button pressed: " + actionState ? "Action is on" : "Action is off");
+                println("Button pressed: " + String(actionState ? "Action is on" : "Action is off"));
             }
         }
     }
@@ -1289,15 +1363,15 @@ void loop() {
 
     // relay control
     digitalWrite(pump_relay, pumpState);
-    digitalWrite(vent_1_relay, vent1State);
-    digitalWrite(vent_2_relay, vent2State);
+    digitalWrite(valve_1_relay, valve1State);
+    digitalWrite(valve_2_relay, valve2State);
     digitalWrite(action_relay, actionState);
 
     // led control
     digitalWrite(pump_led, pumpState);
-    digitalWrite(vent_1_led, vent1State);
-    digitalWrite(vent_2_led, vent2State);
+    digitalWrite(valve_1_led, valve1State);
+    digitalWrite(valve_2_led, valve2State);
     digitalWrite(action_led, actionState);
 
-    delay(100);
+    delay(80);
 }

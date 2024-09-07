@@ -7,7 +7,6 @@ bool saveConfig(const char *path) {
   JsonDocument doc;
 
   doc["network"]["SSID"] = config.network.SSID;
-  doc["network"]["PASSWORD"] = config.network.PASSWORD;
   doc["network"]["HOSTNAME"] = config.network.HOSTNAME;
   doc["network"]["NTP_SERVER"] = config.network.NTP_SERVER;
 
@@ -33,8 +32,8 @@ bool saveConfig(const char *path) {
   doc["MENTION_SUNSET"] = config.MENTION_SUNSET;
 
   doc["MAX_PUMP_TIME"] = config.MAX_PUMP_TIME;
-  doc["MAX_VENT1_TIME"] = config.MAX_VENT1_TIME;
-  doc["MAX_VENT2_TIME"] = config.MAX_VENT2_TIME;
+  doc["MAX_VALVE1_TIME"] = config.MAX_VALVE1_TIME;
+  doc["MAX_VALVE2_TIME"] = config.MAX_VALVE2_TIME;
 
   doc["MON"]["ON"] = config.MON.ON;
   doc["MON"]["TIME"]["ON_TIME"] = config.MON.TIME.ON_TIME;
@@ -132,7 +131,6 @@ bool loadConfig(const char *path) {
   Serial.println("Loading config...");
 
   config.network.SSID = doc["network"]["SSID"].as<String>();
-  config.network.PASSWORD = doc["network"]["PASSWORD"].as<String>();
   config.network.HOSTNAME = doc["network"]["HOSTNAME"].as<String>();
   config.network.NTP_SERVER = doc["network"]["NTP_SERVER"].as<String>();
 
@@ -158,8 +156,8 @@ bool loadConfig(const char *path) {
   config.MENTION_SUNSET = doc["MENTION_SUNSET"].as<bool>();
 
   config.MAX_PUMP_TIME = doc["MAX_PUMP_TIME"].as<int>();
-  config.MAX_VENT1_TIME = doc["MAX_VENT1_TIME"].as<int>();
-  config.MAX_VENT2_TIME = doc["MAX_VENT2_TIME"].as<int>();
+  config.MAX_VALVE1_TIME = doc["MAX_VALVE1_TIME"].as<int>();
+  config.MAX_VALVE2_TIME = doc["MAX_VALVE2_TIME"].as<int>();
 
   config.MON.ON = doc["MON"]["ON"].as<bool>();
   config.MON.TIME.ON_TIME = doc["MON"]["TIME"]["ON_TIME"].as<int>();
@@ -210,7 +208,6 @@ bool loadConfig(const char *path) {
 bool resetConfig() {
   // Network Config
   config.network.SSID = "WIFISSID";
-  config.network.PASSWORD = "WifiPassword";
   config.network.HOSTNAME = "DeviceHostname";
   config.network.NTP_SERVER = "ptbtime1.ptb.de";
 
@@ -239,8 +236,8 @@ bool resetConfig() {
   config.MENTION_SUNSET = false;
 
   config.MAX_PUMP_TIME = 180;
-  config.MAX_VENT1_TIME = 180;
-  config.MAX_VENT2_TIME = 180;
+  config.MAX_VALVE1_TIME = 180;
+  config.MAX_VALVE2_TIME = 180;
 
   // Day configs
   DayConfig *dayConfigs[] = {&config.MON, &config.TUE, &config.WED, &config.THU,

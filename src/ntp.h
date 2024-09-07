@@ -2,12 +2,15 @@
 #define NTP_H
 
 #include <Arduino.h>
+#include <WiFi.h>
+#include <AsyncTCP.h>
 #include <time.h>
+#include "configuration.h"
 
 extern struct tm timeinfo;
 
-extern const char *ntpServer1;
-extern const char *ntpServer2;
+//extern const char *ntpServer1;
+extern const char *ntpServerBackUp;
 extern const char *Timezone;
 
 bool syncTimeWithNTP();

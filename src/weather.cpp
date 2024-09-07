@@ -19,7 +19,7 @@ void getWeatherOpenWeather() {
 
     if (httpCode > 0) {
         String payload = http.getString();
-        Serial.println("Recieved weather data OpenWeather: \n" + payload);
+        Serial.println("Recieved weather data OpenWeather");
 
         JsonDocument doc;
         DeserializationError error = deserializeJson(doc, payload);
@@ -47,12 +47,16 @@ void getWeatherOpenWeather() {
     http.end();
 }
 
-bool updateCalculatedRainDataWithDuration() {
+bool getWeatherMeteo24H() {
     if (config.weather.DURATION_PAST == 24 && config.weather.weatherChannel == "meteomatics") {
         getWeatherMeteomatics();
         calculatedRain24h = rain24h;
         return true;
     }
+    return false;
+}
+
+bool updateCalculatedRainDataWithDuration() {
     if (checkUpdateRainData()) {
         Serial.println("Update calculated rain data");
         if (config.weather.DURATION_PAST <= 0) {
@@ -138,14 +142,15 @@ void getWeatherForecastOpenWeather() {
 void getWeatherMeteomatics() {
     HTTPClient http;
     String datetime = "now";
-    String url = "https://api.meteomatics.com/" + datetime + "/precip_1h:mm,precip_24h:mm,sunset:ux/" + String(config.weather.LATITUDE) + "," + String(config.weather.LONGITUDE) + "/json?model=mix";
+    //String url = "https://api.meteomatics.com/" + datetime + "/precip_1h:mm,precip_24h:mm,sunset:ux/" + String(config.weather.LATITUDE) + "," + String(config.weather.LONGITUDE) + "/json?model=mix";
+    String url = "https://api.meteomatics.com/" + datetime + "/precip_1h:mm,precip_24h:mm,sunset:ux/" + String(config.weather.LATITUDE) + "," + String(config.weather.LONGITUDE);
     http.begin(url);
     http.setAuthorization(config.weather.METHEO_USERNAME.c_str(), config.weather.METHEO_PASSWORD.c_str());
 
     int httpCode = http.GET();
     if (httpCode > 0) {
         String payload = http.getString();
-        Serial.println("Recieved weather data meteomatics: \n" + payload);
+        Serial.println("Recieved weather data meteomatics");
 
         JsonDocument doc;
         DeserializationError error = deserializeJson(doc, payload);
@@ -156,10 +161,12 @@ void getWeatherMeteomatics() {
                 if (parameter == "precip_1h:mm") {
                     rain1h = data["coordinates"][0]["dates"][0]["value"].as<float>();
                     Serial.printf("Rain in last hour meteomatics: %s mm", rain1h);
-                } else if (parameter == "precip_24h:mm") {
+                }
+                if (parameter == "precip_24h:mm") {
                     rain24h = data["coordinates"][0]["dates"][0]["value"].as<float>();
                     Serial.printf("Rain in last 24 hours meteomatics: %s mm", rain24h);
-                } else if (parameter == "sunset:ux") {
+                }
+                if (parameter == "sunset:ux") {
                     sunsetTime = convertSunsetTimeTtoInt(data["coordinates"][0]["dates"][0]["value"]);
                     Serial.printf("Sunset time meteomatics: %d", sunsetTime);
                 }

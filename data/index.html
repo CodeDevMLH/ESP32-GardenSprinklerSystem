@@ -19,12 +19,26 @@
   <nav>
     <a href="#home" onclick="showSection('home')"><i class="fas fa-home"></i><span> Startseite</span></a>
     <a href="#timer" onclick="showSection('timer')"><i class="fas fa-clock"></i><span> Timer</span></a>
-    <a href="#timeclock" onclick="showSection('timeclock')"><i class="fas fa-calendar-alt"></i><span> Zeitschaltuhr</span></a>
+    <a href="#timeclock" onclick="showSection('timeclock')"><i class="fas fa-calendar-alt"></i><span>
+        Zeitschaltuhr</span></a>
     <a href="#settings" onclick="showSection('settings')"><i class="fas fa-cogs"></i><span> Einstellungen</span></a>
     <a href="#about" onclick="showSection('about')"><i class="fas fa-info-circle"></i><span> Über</span></a>
     <a href="#webserial" onclick="showSection('webserial')"><i class="fas fa-terminal"></i><span> Web-Serial</span></a>
-    <a href="#emergency-stop" onclick="emergency()" class="emergency-stop"><i class="fas fa-exclamation-triangle"></i><span> NOT-AUS</span></a>
+    <a href="#emergency-stop" onclick="emergency()" class="emergency-stop"><i
+        class="fas fa-exclamation-triangle"></i><span> NOT-AUS</span></a>
   </nav>
+
+  <!-- Alert container -->
+  <div id="pageMessages"></div>
+  <!-- Modal Overlay -->
+  <div id="modalOverlay" class="modal-overlay">
+    <div class="modal">
+      <h2>Bestätigen</h2>
+      <p>Möchten Sie diese Aktion wirklich durchführen?</p>
+      <button class="btn-confirm" id="confirmButton">Bestätigen</button>
+      <button class="btn-cancel" id="cancelButton">Abbrechen</button>
+    </div>
+  </div>
 
   <div class="container" id="home-content">
     <h2><i class="fas fa-home icon"></i>Startseite</h2>
@@ -52,10 +66,11 @@
       <span id="ground_humidity">null</span>
     </p>
     <p>
-      <p>Niederschlag letzte <span id="nds24h-text">24</span>h: <span id="nds24h">null</span></p>
+    <p>Niederschlag letzte <span id="nds24h-text">24</span>h: <span id="nds24h">null</span></p>
     </p>
     <p>
-      <p>Voraussichtlicher Niederschlag nächste <span id="nds24h-next-text">24</span>h: <span id="nds24h-next">null</span></p>
+    <p>Voraussichtlicher Niederschlag nächste <span id="nds24h-next-text">24</span>h: <span id="nds24h-next">null</span>
+    </p>
     </p>
 
     <h2><i class="fas fa-info-circle icon"></i>Status</h2>
@@ -82,8 +97,10 @@
 
     <div>
       <h2><i class="fas fa-sliders-h icon"></i>Manuelle Steuerung</h2>
-      <input type="button" id="vent1-button" class="manualControl red" onclick="toggleVent1(this)" value="Ventil 1 AN" />
-      <input type="button" id="vent2-button" class="manualControl red" onclick="toggleVent2(this)" value="Ventil 2 AN" />
+      <input type="button" id="valve1-button" class="manualControl red" onclick="toggleValve1(this)"
+        value="Ventil 1 AN" />
+      <input type="button" id="valve2-button" class="manualControl red" onclick="toggleValve2(this)"
+        value="Ventil 2 AN" />
       <input type="button" id="pump-button" class="manualControl red" onclick="togglePump(this)" value="Pumpe AN" />
     </div>
 
@@ -95,84 +112,84 @@
         <input type="checkbox" id="zeitsteuerung-aktiv" onchange="toggleSetTimetable()">
         <span class="slider round"></span>
       </label>
-      <br/>
+      <br />
       <label class="switch">
         <span class="switch-label">Niederschlag berücksichtigen:</span>
         <input type="checkbox" id="nds-data" onchange="toggleRain()">
         <span class="slider round"></span>
       </label>
-      <br/>
+      <br />
       <label class="switch">
         <span class="switch-label">Voraussichtlichen Niederschlag berücksichtigen:</span>
         <input type="checkbox" id="nds-data-forecast" onchange="toggleRainForecast()">
         <span class="slider round"></span>
       </label>
-      <br/>
+      <br />
       <label class="switch">
         <span class="switch-label">Nach Abenddämmerung sprengen:</span>
         <input type="checkbox" id="mention-sunset" onchange="toggleSunset()">
         <span class="slider round"></span>
       </label>
-      <br/>
+      <br />
 
-        <table>
-          <tr>
-            <th>Wochentag</th>
-            <th>Aktiv</th>
-            <th>Einschalt-Zeit</th>
-            <th>Timer Kreis 1</th>
-            <th>Timer Kreis 2</th>
-          </tr>
-          <tr>
-            <td>Montag</td>
-            <td id="enabled-monday"></td>
-            <td id="view-monday-on-time"></td>
-            <td id="view-monday-timer1"></td>
-            <td id="view-monday-timer2"></td>
-          </tr>
-          <tr>
-            <td>Dienstag</td>
-            <td id="enabled-tuesday"></td>
-            <td id="view-tuesday-on-time"></td>
-            <td id="view-tuesday-timer1"></td>
-            <td id="view-tuesday-timer2"></td>
-          </tr>
-          <tr>
-            <td>Mittwoch</td>
-            <td id="enabled-wednesday"></td>
-            <td id="view-wednesday-on-time"></td>
-            <td id="view-wednesday-timer1"></td>
-            <td id="view-wednesday-timer2"></td>
-          </tr>
-          <tr>
-            <td>Donnerstag</td>
-            <td id="enabled-thursday"></td>
-            <td id="view-thursday-on-time"></td>
-            <td id="view-thursday-timer1"></td>
-            <td id="view-thursday-timer2"></td>
-          </tr>
-          <tr>
-            <td>Freitag</td>
-            <td id="enabled-friday"></td>
-            <td id="view-friday-on-time"></td>
-            <td id="view-friday-timer1"></td>
-            <td id="view-friday-timer2"></td>
-          </tr>
-          <tr>
-            <td>Samstag</td>
-            <td id="enabled-saturday"></td>
-            <td id="view-saturday-on-time"></td>
-            <td id="view-saturday-timer1"></td>
-            <td id="view-saturday-timer2"></td>
-          </tr>
-          <tr>
-            <td>Sonntag</td>
-            <td id="enabled-sunday"></td>
-            <td id="view-sunday-on-time"></td>
-            <td id="view-sunday-timer1"></td>
-            <td id="view-sunday-timer2"></td>
-          </tr>
-        </table>
+      <table>
+        <tr>
+          <th>Wochentag</th>
+          <th>Aktiv</th>
+          <th>Einschalt-Zeit</th>
+          <th>Timer Kreis 1</th>
+          <th>Timer Kreis 2</th>
+        </tr>
+        <tr>
+          <td>Montag</td>
+          <td id="enabled-monday"></td>
+          <td id="view-monday-on-time"></td>
+          <td id="view-monday-timer1"></td>
+          <td id="view-monday-timer2"></td>
+        </tr>
+        <tr>
+          <td>Dienstag</td>
+          <td id="enabled-tuesday"></td>
+          <td id="view-tuesday-on-time"></td>
+          <td id="view-tuesday-timer1"></td>
+          <td id="view-tuesday-timer2"></td>
+        </tr>
+        <tr>
+          <td>Mittwoch</td>
+          <td id="enabled-wednesday"></td>
+          <td id="view-wednesday-on-time"></td>
+          <td id="view-wednesday-timer1"></td>
+          <td id="view-wednesday-timer2"></td>
+        </tr>
+        <tr>
+          <td>Donnerstag</td>
+          <td id="enabled-thursday"></td>
+          <td id="view-thursday-on-time"></td>
+          <td id="view-thursday-timer1"></td>
+          <td id="view-thursday-timer2"></td>
+        </tr>
+        <tr>
+          <td>Freitag</td>
+          <td id="enabled-friday"></td>
+          <td id="view-friday-on-time"></td>
+          <td id="view-friday-timer1"></td>
+          <td id="view-friday-timer2"></td>
+        </tr>
+        <tr>
+          <td>Samstag</td>
+          <td id="enabled-saturday"></td>
+          <td id="view-saturday-on-time"></td>
+          <td id="view-saturday-timer1"></td>
+          <td id="view-saturday-timer2"></td>
+        </tr>
+        <tr>
+          <td>Sonntag</td>
+          <td id="enabled-sunday"></td>
+          <td id="view-sunday-on-time"></td>
+          <td id="view-sunday-timer1"></td>
+          <td id="view-sunday-timer2"></td>
+        </tr>
+      </table>
     </div>
   </div>
 
@@ -187,11 +204,11 @@
     <p>Starzeit des Timers</p>
     <div class="switch-timer-container">
       <label class="switch">
-          <input type="checkbox" id="timer-on-time-switch">
-          <span class="slider round"></span>
+        <input type="checkbox" id="timer-on-time-switch">
+        <span class="slider round"></span>
       </label>
       <input type="time" id="timer-on-time" />
-  </div>
+    </div>
     <div class="">
       <label class="switch">
         <input type="checkbox" id="select-all-timers" onchange="toggleTimerOptions()">
@@ -200,8 +217,10 @@
       </label>
     </div>
     <br />
-    <input type="button" id="timer1-button" onclick="sendTimer(1)" value="Start timer Kreis 1" style="display: inline-block" />
-    <input type="button" id="timer2-button" onclick="sendTimer(2)" value="Start timer Kreis 2" style="display: inline-block" />
+    <input type="button" id="timer1-button" onclick="sendTimer(1)" value="Start timer Kreis 1"
+      style="display: inline-block" />
+    <input type="button" id="timer2-button" onclick="sendTimer(2)" value="Start timer Kreis 2"
+      style="display: inline-block" />
     <input type="button" id="timer-all-button" onclick="sendTimer(3)" value="Start timer" style="display: none" />
     <input type="button" id="stop-timer" onclick="stopTimer()" value="Timer stoppen" />
   </div>
@@ -347,7 +366,8 @@
       <button type="button" onclick="uploadConfig()">Upload</button>
     </form>
     <br>
-    <input type="button" onclick="window.location.href='/download'" value="Download config.json" />
+    <input type="button" onclick="window.location.href='/download'; sendDownloadAlert();"
+      value="Download config.json" />
 
     <br />
     <hr />
@@ -364,7 +384,7 @@
       <label for="wifi-ssid">SSID:</label>
       <input type="text" id="wifi-ssid" name="wifi_ssid" placeholder="WiFi" value="" /><br />
       <label for="wifi-pw">Password:</label>
-      <input type="text" id="wifi-pw" name="wifi_pw" placeholder="WiFi" value="" /><br /><br />
+      <input type="text" id="wifi-pw" name="wifi_pw" placeholder="WiFi" value="****" /><br /><br />
       <input type="submit" value="Speichern" />
       <input type="reset" value="Reset" />
     </form>
@@ -382,21 +402,25 @@
     <form id="weather-form" onchange="saveWetherSettings(event, 'weather-form')">
       <label for="weather-channel">Wetter API für Niederschlagsmenge der letzten Stunden:</label>
       <select name="weather_channel" id="weather-channel" onchange="toggleWeatherForm()">
-        <option value="openweather">OpenWeather</option>
-        <option value="metehomatics">Metehomatics</option>
+        <option value="openweather" name="openweather">OpenWeather</option>
+        <option value="meteomatics" name="meteomatics">Metehomatics</option>
       </select>
     </form>
     <form id="openweather-form" style="display: block" onsubmit="saveSettings(event, 'openweather-form')">
       <label for="wether-op-api-key-ow">OpenWeather API-Key:</label>
       <input type="text" id="wether-op-api-key-ow" name="api_key" placeholder="apikey" value="" /><br />
       <label for="longitude-ow">Longitude:</label>
-      <input type="number" id="longitude-ow" name="longitude" placeholder="9,123" value="" step="0.00000000000001"/><br />
+      <input type="number" id="longitude-ow" name="longitude" placeholder="9,123" value=""
+        step="0.00000000000001" /><br />
       <label for="latitude-ow">Latitude:</label>
-      <input type="number" id="latitude-ow" name="latitude" placeholder="52,123" value="" step="0.00000000000001"/><br />
+      <input type="number" id="latitude-ow" name="latitude" placeholder="52,123" value=""
+        step="0.00000000000001" /><br />
       <label for="rain_duration_past_ow">Berücksichtige Niederschlag der letzten:</label>
-      <input type="number" id="rain_duration_past_ow" name="rain_duration_past" placeholder="24" min="1" max="24" value="" /> Stunden<br />
+      <input type="number" id="rain_duration_past_ow" name="rain_duration_past" placeholder="24" min="1" max="24"
+        value="" /> Stunden<br />
       <label for="rain_duration_forecast_ow">Berücksichtige Niederschlag der kommenden:</label>
-      <input type="number" id="rain_duration_forecast_ow" name="rain_duration_forecast" placeholder="24" min="1" max="24" value="" /> Stunden<br />
+      <input type="number" id="rain_duration_forecast_ow" name="rain_duration_forecast" placeholder="24" min="1"
+        max="24" value="" /> Stunden<br />
       <input type="submit" value="Speichern" />
       <input type="reset" value="Reset" />
     </form>
@@ -408,35 +432,42 @@
       <label for="wether-metheo-pw">Metheomatics-Passwort:</label>
       <input type="text" id="wether-metheo-pw" name="metheo_pw" placeholder="password" value="" /><br />
       <label for="longitude-meteo">Longitude:</label>
-      <input type="number" id="longitude-meteo" name="longitude" placeholder="9,123" value="" step="0.00000000000001"/><br />
+      <input type="number" id="longitude-meteo" name="longitude" placeholder="9,123" value=""
+        step="0.00000000000001" /><br />
       <label for="latitude-meteo">Latitude:</label>
-      <input type="number" id="latitude-meteo" name="latitude" placeholder="52,123" value="" step="0.00000000000001"/><br />
+      <input type="number" id="latitude-meteo" name="latitude" placeholder="52,123" value=""
+        step="0.00000000000001" /><br />
       <label for="rain_duration_past_meteo">Berücksichtige Niederschlag der letzten:</label>
-      <input type="number" id="rain_duration_past_meteo" name="rain_duration_past" placeholder="24" min="1" max="24" value="" /> Stunden<br />
+      <input type="number" id="rain_duration_past_meteo" name="rain_duration_past" placeholder="24" min="1" max="24"
+        value="" /> Stunden<br />
       <label for="rain_duration_forecast_meteo">Berücksichtige Niederschlag der kommenden:</label>
-      <input type="number" id="rain_duration_forecast_meteo" name="rain_duration_forecast" placeholder="24" min="1" max="24" value="" /> Stunden<br />
+      <input type="number" id="rain_duration_forecast_meteo" name="rain_duration_forecast" placeholder="24" min="1"
+        max="24" value="" /> Stunden<br />
       <input type="submit" value="Speichern" />
       <input type="reset" value="Reset" />
     </form>
     <hr />
     <form id="precipitation-form" onsubmit="saveSettings(event, 'precipitation-form')">
       <label for="precipitation-level">Grenze für Niederschlagsmenge bei automatischer Sprengung:</label>
-      <input type="number" id="precipitation-level" name="precipitation_level" min="1" max="1000" placeholder="20" /> mm<br />
-      <label for="precipitation-level-forecast">Grenze für vorraussichtlicher Niederschlagsmenge bei automatischer Sprengung:</label>
-      <input type="number" id="precipitation-level-forecast" name="precipitation_level_forecast" min="1" max="1000" placeholder="20" /> mm<br />
+      <input type="number" id="precipitation-level" name="precipitation_level" min="1" max="1000" placeholder="20" />
+      mm<br />
+      <label for="precipitation-level-forecast">Grenze für vorraussichtlicher Niederschlagsmenge bei automatischer
+        Sprengung:</label>
+      <input type="number" id="precipitation-level-forecast" name="precipitation_level_forecast" min="1" max="1000"
+        placeholder="20" /> mm<br />
       <input type="submit" value="Speichern" />
       <input type="reset" value="Reset" />
     </form>
-    <br/>
-    <hr/>
+    <br />
+    <hr />
     <h4>Sicherheits Einstellungen</h4>
     <form id="security-form" onsubmit="saveSettings(event, 'security-form')">
       <label for="max-pump-time">Pumpe abschalten bei überschreiten der Betriebszeit von:</label>
       <input type="number" id="max-pump-time" name="max_pump_time" min="5" max="180" placeholder="120" /> min<br />
-      <label for="max-vent1-time">Ventil 1 abschalten bei überschreiten der Betriebszeit von:</label>
-      <input type="number" id="max-vent1-time" name="max_vent1_time" min="5" max="180" placeholder="75" /> min<br />
-      <label for="max-vent2-time">Ventil 2 abschalten bei überschreiten der Betriebszeit von:</label>
-      <input type="number" id="max-vent2-time" name="max_vent2_time" min="5" max="180" placeholder="75" /> min<br />
+      <label for="max-valve1-time">Ventil 1 abschalten bei überschreiten der Betriebszeit von:</label>
+      <input type="number" id="max-valve1-time" name="max_valve1_time" min="5" max="180" placeholder="75" /> min<br />
+      <label for="max-valve2-time">Ventil 2 abschalten bei überschreiten der Betriebszeit von:</label>
+      <input type="number" id="max-valve2-time" name="max_valve2_time" min="5" max="180" placeholder="75" /> min<br />
       <input type="submit" value="Speichern" />
       <input type="reset" value="Reset" />
     </form>
@@ -448,7 +479,7 @@
   </div>
 
   <div class="container" id="about-content" style="display: none">
-    <h2><i class="fas fa-info-circle icon"></i>Über</h2>  
+    <h2><i class="fas fa-info-circle icon"></i>Über</h2>
     <h4>ESP32-Info</h4>
     <table id="info_table">
       <tr>
@@ -540,11 +571,12 @@
 
   <div class="container" id="webserial-content" style="display: none">
     <h2><i class="fas fa-terminal"></i> Web-Serial</h2>
-    <iframe src="/webserial" title="Serial Output" width="100%" height="96%"></iframe>   
+    <iframe src="/webserial" title="Serial Output" width="100%" height="96%"></iframe>
   </div>
 
   <div class="footer">
-    <p>&copy; 2024 Gartenbewässerung. Alle Rechte vorbehalten. <a href="https://github.com/CodeDevMLH/">@CodeDevMLH</a></p>
+    <p>&copy; 2024 Gartenbewässerung. Alle Rechte vorbehalten. <a href="https://github.com/CodeDevMLH/">@CodeDevMLH</a>
+    </p>
   </div>
 </body>
 

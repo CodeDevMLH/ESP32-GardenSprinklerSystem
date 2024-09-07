@@ -455,6 +455,7 @@ MARK: Alerts
 .alert {
   position: relative;
   max-width: 100%;
+  min-width: 200px;
   padding: 15px;
   margin-bottom: 10px;
   border-radius: 5px;
@@ -465,7 +466,7 @@ MARK: Alerts
   transition: opacity 0.5s ease; /* Übergangseffekt für das Ausfaden */
   display: inline-block; /* Passt die Breite an den Inhalt an */
   word-wrap: break-word; /* Erlaubt das Umbrechen langer Wörter */
-  width: fit-content; /* Passt die Breite an den Inhalt an */
+  /*width: fit-content; /* Passt die Breite an den Inhalt an */
   align-self: flex-end; /* Setzt den Alert an den rechten Rand */
 }
 

@@ -1,18 +1,16 @@
 {
   "network": {
     "SSID": "WIFISSID",
-    "PASSWORD": "WifiPassword",
     "HOSTNAME": "Gartensprenger",
     "NTP_SERVER": "ptbtime1.ptb.de"
   },
   "weather": {
     "weather_channel": "openweather",
     "API_KEY": "api_key",
-    "CITY_ID": 2910831,
-    "LATITUDE": 52.3759,
-    "LONGITUDE": 9.7320,
     "METHEO_USERNAME": "username",
     "METHEO_PASSWORD": "password",
+    "LATITUDE": 52.3759,
+    "LONGITUDE": 9.7320,
     "DURATION_PAST": 24,
     "DURATION_FORECAST": 24
   },
@@ -29,8 +27,8 @@
   "PRECIPITATION_AMOUNT_FORECAST": 20.0,
   "MENTION_SUNSET": false,
   "MAX_PUMP_TIME": 180,
-  "MAX_VENT1_TIME": 180,
-  "MAX_VENT2_TIME": 180,
+  "MAX_VALVE1_TIME": 180,
+  "MAX_VALVE2_TIME": 180,
   "MON": {
     "ON": false,
     "TIME": {

@@ -93,7 +93,7 @@ async function saveWetherSettings(event, formId) {
     if (result.status) {
       createAlert(
         "Gespeichert",
-        "Wettereinstellungen übernommen",
+        "Wetterdienst übernommen",
         "success",
         true,
         true
@@ -116,7 +116,7 @@ async function loadSettingsWeather() {
       document.getElementById("openweather-form").style.display = "block";
       document.getElementById("metehomatics-form").style.display = "none";
       document.getElementById("wether-op-api-key-ow").value =
-        data.openweather_api_key;
+        data.api_key;
       document.getElementById("longitude-ow").value = data.longitude;
       document.getElementById("latitude-ow").value = data.latitude;
       document.getElementById("rain_duration_past_ow").value =
@@ -125,7 +125,7 @@ async function loadSettingsWeather() {
         data.rain_duration_forecast;
     } else if (data.weather_channel === "metehomatics") {
       document.getElementById("wether-op-api-key-meteo").value =
-        data.openweather_api_key;
+        data.api_key;
       document.getElementById("openweather-form").style.display = "none";
       document.getElementById("metehomatics-form").style.display = "block";
       document.getElementById("wether-metheo-user").value =
@@ -204,7 +204,6 @@ async function emergency() {
     false,
     true
   );
-  
 }
 
 //MARK: Timer
@@ -268,7 +267,7 @@ async function fetchCurrentTimerData() {
 async function stopTimer() {
   try {
     const response = await fetch(`/stop-timer`);
-    const result = await response.text();
+    const result = await response.json();
     console.log("All timers stopped. Success: ", result.status);
     if (result.status) {
       createAlert(
@@ -383,16 +382,16 @@ async function getHomeStatus() {
     document.getElementById("stat_pumpe").innerText = data.pump_button
       ? "AN"
       : "AUS";
-    document.getElementById("vent1-button").value = data.vent1_button
+    document.getElementById("valve1-button").value = data.valve1_button
       ? "Ventil 1 AUS"
       : "Ventil 1 AN";
-    document.getElementById("stat_kreis1").innerText = data.vent1_button
+    document.getElementById("stat_kreis1").innerText = data.valve1_button
       ? "AN"
       : "AUS";
-    document.getElementById("vent2-button").value = data.vent2_button
+    document.getElementById("valve2-button").value = data.valve2_button
       ? "Ventil 2 AUS"
       : "Ventil 2 AN";
-    document.getElementById("stat_kreis2").innerText = data.vent2_button
+    document.getElementById("stat_kreis2").innerText = data.valve2_button
       ? "AN"
       : "AUS";
     setManualControlButtons();
@@ -410,7 +409,7 @@ function setManualControlButtons() {
     button.classList.remove("green");
     button.classList.add("red");
   }
-  button = document.getElementById("vent1-button");
+  button = document.getElementById("valve1-button");
   if (button.value === "Ventil 1 AUS") {
     button.classList.remove("red");
     button.classList.add("green");
@@ -418,7 +417,7 @@ function setManualControlButtons() {
     button.classList.remove("green");
     button.classList.add("red");
   }
-  button = document.getElementById("vent2-button");
+  button = document.getElementById("valve2-button");
   if (button.value === "Ventil 2 AUS") {
     button.classList.remove("red");
     button.classList.add("green");
@@ -459,7 +458,7 @@ async function getHomeTimetable() {
 async function toggleRestart() {
   try {
     const response = await fetch("/restart");
-    const result = await response.text();
+    const result = await response.json();
     console.log("Reboot. Success: ", result);
     if (result.status) {
       createAlert(
@@ -652,16 +651,16 @@ async function togglePump(button) {
   }
 }
 
-async function toggleVent1(button) {
+async function toggleValve1(button) {
   try {
-    const response = await fetch("/toggleVent1");
+    const response = await fetch("/toggleValve1");
     const data = await response.json();
     button.value = data.status ? "Ventil 1 AUS" : "Ventil 1 AN";
     document.getElementById("stat_kreis1").innerText = data.status
       ? "AN"
       : "AUS";
   } catch (error) {
-    console.error("Error toggle vent 1:", error);
+    console.error("Error toggle valve 1:", error);
   }
 
   if (button.value === "Ventil 1 AUS") {
@@ -673,16 +672,16 @@ async function toggleVent1(button) {
   }
 }
 
-async function toggleVent2(button) {
+async function toggleValve2(button) {
   try {
-    const response = await fetch("/toggleVent2");
+    const response = await fetch("/toggleValve2");
     const data = await response.json();
     button.value = data.status ? "Ventil 2 AUS" : "Ventil 2 AN";
     document.getElementById("stat_kreis2").innerText = data.status
       ? "AN"
       : "AUS";
   } catch (error) {
-    console.error("Error toggle vent 2:", error);
+    console.error("Error toggle valve 2:", error);
   }
 
   if (button.value === "Ventil 2 AUS") {
@@ -710,37 +709,29 @@ async function loadSettings() {
       data.precipitation_level_forecast;
 
     document.getElementById("max-pump-time").value = data.max_pump_time;
-    document.getElementById("max-vent1-time").value = data.max_vent1_time;
-    document.getElementById("max-vent2-time").value = data.max_vent2_time;
+    document.getElementById("max-valve1-time").value = data.max_valve1_time;
+    document.getElementById("max-valve2-time").value = data.max_valve2_time;
 
     // Weather API Settings
     document.getElementById("weather-channel").value = data.weather_channel;
     if (data.weather_channel === "openweather") {
       document.getElementById("openweather-form").style.display = "block";
       document.getElementById("metehomatics-form").style.display = "none";
-      document.getElementById("wether-op-api-key-ow").value =
-        data.openweather_api_key;
+      document.getElementById("wether-op-api-key-ow").value = data.api_key;
       document.getElementById("longitude-ow").value = data.longitude;
       document.getElementById("latitude-ow").value = data.latitude;
-      document.getElementById("rain_duration_past_ow").value =
-        data.rain_duration_past;
-      document.getElementById("rain_duration_forecast_ow").value =
-        data.rain_duration_forecast;
+      document.getElementById("rain_duration_past_ow").value = data.rain_duration_past;
+      document.getElementById("rain_duration_forecast_ow").value = data.rain_duration_forecast;
     } else if (data.weather_channel === "metehomatics") {
-      document.getElementById("wether-op-api-key-meteo").value =
-        data.openweather_api_key;
       document.getElementById("openweather-form").style.display = "none";
       document.getElementById("metehomatics-form").style.display = "block";
-      document.getElementById("wether-metheo-user").value =
-        data.metehomatics_user;
-      document.getElementById("wether-metheo-pw").value =
-        data.metehomatics_password;
+      document.getElementById("wether-op-api-key-meteo").value = data.api_key;
+      document.getElementById("wether-metheo-user").value = data.metehomatics_user;
+      document.getElementById("wether-metheo-pw").value = data.metehomatics_password;
       document.getElementById("longitude-meteo").value = data.longitude;
       document.getElementById("latitude-meteo").value = data.latitude;
-      document.getElementById("rain_duration_past_meteo").value =
-        data.rain_duration_past;
-      document.getElementById("rain_duration_forecast_meteo").value =
-        data.rain_duration_forecast;
+      document.getElementById("rain_duration_past_meteo").value = data.rain_duration_past;
+      document.getElementById("rain_duration_forecast_meteo").value = data.rain_duration_forecast;
     }
   } catch (error) {
     console.error("Error loading settings:", error);
@@ -821,7 +812,7 @@ function sendDownloadAlert() {
 
 //MARK: File Upload
 async function uploadConfig() {
-  const fileInput = document.getElementById("config-file");
+  const fileInput = document.getElementById("configfile");
   const file = fileInput.files[0];
 
   if (!file) {
@@ -838,7 +829,22 @@ async function uploadConfig() {
       body: formData,
     });
 
-    if (response.ok) {
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Error uploading file: Status ${response.status} - ${errorText}`);
+      createAlert(
+        "Warnung",
+        `Fehler beim Hochladen: ${errorText}`,
+        "warning",
+        false,
+        true
+      );
+      return;
+    }
+
+    const result = await response.json();
+    if (result.status) {
+      console.log("File uploaded successfully");
       createAlert(
         "Gespeichert",
         "Config erfolgreich hochgeladen!",
@@ -847,6 +853,7 @@ async function uploadConfig() {
         true
       );
     } else {
+      console.log("File uploaded failed");
       createAlert(
         "Warnung",
         "Fehler beim Hochladen!",

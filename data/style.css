@@ -115,6 +115,16 @@ h2 {
   width: 100%;
 }
 
+/* show or hide extra circle/action functions, texts etc.
+MARK: Action Enabled
+*/
+.actionEnabled {
+  display: none;
+}
+input[type="button"].actionEnabled {
+  display: none;
+}
+
 /*Basisstil für die Switches
   MARK: Switches
   */

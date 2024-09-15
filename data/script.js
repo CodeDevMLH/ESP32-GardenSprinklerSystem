@@ -11,6 +11,19 @@ function updateTime() {
 
 setInterval(updateTime, 1000);
 setInterval(getHomeStatus, 1000);
+// Warten auf DOMContentLoaded und load Events
+let domReady = false;
+let pageLoaded = false;
+
+document.addEventListener('DOMContentLoaded', () => {
+    domReady = true;
+    if (pageLoaded) checkActionEnabled();
+});
+
+window.addEventListener('load', () => {
+    pageLoaded = true;
+    if (domReady) checkActionEnabled();
+});
 
 //MARK: Section Control
 function showSection(section) {
@@ -58,22 +71,44 @@ function loadData() {
 }
 
 //MARK: UI Controls
+// function to show all action elements
+async function checkActionEnabled() {
+    try {
+      const response = await fetch("/checkActionEnabled");
+      const data = await response.json();
+      console.log("Action enabled: ", data);
+      if (data.status) {
+        const actionElements = document.querySelectorAll('.actionEnabled');
+        actionElements.forEach(element => {
+          element.style.display = "inline";
+        });
+      } else {
+        const actionElements = document.querySelectorAll('.actionEnabled');
+        actionElements.forEach(element => {
+          element.style.display = "none";
+        });
+      }
+    } catch (error) {
+      console.error("Error on check action enabled:", error);
+    }
+}
+
 // Function to toggle wetaher settings options
 function toggleWeatherForm() {
   var weatherChannel = document.getElementById("weather-channel").value;
   var openweatherForm = document.getElementById("openweather-form");
-  var metehomaticsForm = document.getElementById("metehomatics-form");
+  var meteomaticsForm = document.getElementById("meteomatics-form");
 
   if (weatherChannel === "openweather") {
     openweatherForm.style.display = "block";
-    metehomaticsForm.style.display = "none";
-  } else if (weatherChannel === "metehomatics") {
+    meteomaticsForm.style.display = "none";
+  } else {
     openweatherForm.style.display = "none";
-    metehomaticsForm.style.display = "block";
+    meteomaticsForm.style.display = "block";
   }
 }
 
-async function saveWetherSettings(event, formId) {
+async function saveweatherSettings(event, formId) {
   event.preventDefault();
   const form = document.getElementById(formId);
   const formData = new FormData(form);
@@ -114,8 +149,8 @@ async function loadSettingsWeather() {
     document.getElementById("weather-channel").value = data.weather_channel;
     if (data.weather_channel === "openweather") {
       document.getElementById("openweather-form").style.display = "block";
-      document.getElementById("metehomatics-form").style.display = "none";
-      document.getElementById("wether-op-api-key-ow").value =
+      document.getElementById("meteomatics-form").style.display = "none";
+      document.getElementById("weather-op-api-key-ow").value =
         data.api_key;
       document.getElementById("longitude-ow").value = data.longitude;
       document.getElementById("latitude-ow").value = data.latitude;
@@ -123,15 +158,15 @@ async function loadSettingsWeather() {
         data.rain_duration_past;
       document.getElementById("rain_duration_forecast_ow").value =
         data.rain_duration_forecast;
-    } else if (data.weather_channel === "metehomatics") {
-      document.getElementById("wether-op-api-key-meteo").value =
+    } else if (data.weather_channel === "meteomatics") {
+      document.getElementById("weather-op-api-key-meteo").value =
         data.api_key;
       document.getElementById("openweather-form").style.display = "none";
-      document.getElementById("metehomatics-form").style.display = "block";
-      document.getElementById("wether-metheo-user").value =
-        data.metehomatics_user;
-      document.getElementById("wether-metheo-pw").value =
-        data.metehomatics_password;
+      document.getElementById("meteomatics-form").style.display = "block";
+      document.getElementById("weather-meteo-user").value =
+        data.meteomatics_user;
+      document.getElementById("weather-meteo-pw").value =
+        data.meteomatics_password;
       document.getElementById("longitude-meteo").value = data.longitude;
       document.getElementById("latitude-meteo").value = data.latitude;
       document.getElementById("rain_duration_past_meteo").value =
@@ -199,20 +234,63 @@ async function emergency() {
   }
   createAlert(
     "Warnung!",
-    "Notaus ausgelöst!",
+    "Not-Aus ausgelöst!",
     "warning",
     false,
     true
   );
+  emergencyLoop();
+}
+//MARK: emergnecy stop
+function showEmergencyStopConfirmationDialog() {
+  return new Promise((resolve, reject) => {
+    // Zeige den Dialog an
+    const modalEmergencyOverlay = document.getElementById('modalEmergencyOverlay');
+    modalEmergencyOverlay.classList.add('show');
+
+    // Event-Handler für die Bestätigungs-Schaltfläche
+    const confirmButton = document.getElementById('confirmButtonEmergency');
+    confirmButton.onclick = () => {
+      modalEmergencyOverlay.classList.remove('show');
+        resolve(true); // Resolve das Promise bei Bestätigung
+    };
+});
+}
+
+// Function to reset whole esp
+async function emergencyLoop() {  
+  try {
+      await showEmergencyStopConfirmationDialog();
+      const response = await fetch("/emergencyLoop");
+      const result = await response.json();
+      console.log("emergency stopped!: Success: ", result.status);
+      if (result.status) {
+        createAlert(
+          "Info!",
+          "Not-Aus aufgehoben!",
+          "info",
+          true,
+          true
+        );
+      } else {
+        createAlert(
+          "Warnung!",
+          "Not-Aus konnte nicht aufgehoben werden!",
+          "warning",
+          false,
+          true
+        );
+      }
+    } catch (error) {
+      console.error("Error on emergency stop:", error);
+  }
 }
 
 //MARK: Timer
 // Function to send timer
 async function sendTimer(timer) {
   const timerValue = document.getElementById("timerslider").value;
-  const timerOnTimeSwitch = document.getElementById(
-    "timer-on-time-switch"
-  ).checked;
+  const timerOnTimeSwitch = document.getElementById("timer-on-time-switch").checked;
   const timerOnTime = document.getElementById("timer-on-time").value;
   const timmerAll = document.getElementById("select-all-timers").checked;
 
@@ -362,19 +440,16 @@ async function getHomeStatus() {
     document.getElementById("temperature").innerText = data.temperature + " °C";
     document.getElementById("humidity").innerText = data.humidity + " %";
     document.getElementById("ground_temp").innerText = data.ground_temp + " °C";
-    document.getElementById("ground_humidity").innerText =
-      data.ground_humidity + " %";
+    document.getElementById("ground_humidity").innerText = data.ground_humidity + " %";
     document.getElementById("nds24h").innerText = data.nds24h + " mm";
     document.getElementById("nds24h-text").innerText = data.nds24h_text;
     document.getElementById("nds24h-next").innerText = data.nds24h_next + " mm";
-    document.getElementById("nds24h-next-text").innerText =
-      data.nds24h_next_text;
+    document.getElementById("nds24h-next-text").innerText = data.nds24h_next_text;
     document.getElementById("kreis1-timer-stat").innerText = data.kreis1_timer;
     document.getElementById("kreis2-timer-stat").innerText = data.kreis2_timer;
     document.getElementById("zeitsteuerung-aktiv").checked = data.time_control;
     document.getElementById("nds-data").checked = data.nds_active;
-    document.getElementById("nds-data-forecast").checked =
-      data.nds_active_forecast;
+    document.getElementById("nds-data-forecast").checked = data.nds_active_forecast;
     document.getElementById("mention-sunset").checked = data.mentions_sunset;
     document.getElementById("pump-button").value = data.pump_button
       ? "Pumpe AUS"
@@ -394,7 +469,14 @@ async function getHomeStatus() {
     document.getElementById("stat_kreis2").innerText = data.valve2_button
       ? "AN"
       : "AUS";
+    document.getElementById("action-button").value = data.action_button
+      ? "Action AUS"
+      : "Action AN";
+    document.getElementById("stat_action").innerText = data.action_button
+      ? "AN"
+      : "AUS";
     setManualControlButtons();
+    //console.log("updated home data");
   } catch (error) {
     console.error("Error on fetch home data:", error);
   }
@@ -419,6 +501,14 @@ function setManualControlButtons() {
   }
   button = document.getElementById("valve2-button");
   if (button.value === "Ventil 2 AUS") {
+    button.classList.remove("red");
+    button.classList.add("green");
+  } else {
+    button.classList.remove("green");
+    button.classList.add("red");
+  }
+  button = document.getElementById("action-button");
+  if (button.value === "Action AUS") {
     button.classList.remove("red");
     button.classList.add("green");
   } else {
@@ -693,6 +783,27 @@ async function toggleValve2(button) {
   }
 }
 
+async function toggleAction(button) {
+  try {
+    const response = await fetch("/toggleAction");
+    const data = await response.json();
+    button.value = data.status ? "Action AUS" : "Action AN";
+    document.getElementById("stat_action").innerText = data.status
+      ? "AN"
+      : "AUS";
+  } catch (error) {
+    console.error("Error toggle action:", error);
+  }
+
+  if (button.value === "Action AUS") {
+    button.classList.remove("red");
+    button.classList.add("green");
+  } else {
+    button.classList.remove("green");
+    button.classList.add("red");
+  }
+}
+
 //MARK: Settings
 //load settings defaults
 async function loadSettings() {
@@ -703,31 +814,32 @@ async function loadSettings() {
     document.getElementById("wifi-ssid").value = data.ssid;
     document.getElementById("hostname").value = data.hostname;
 
-    document.getElementById("precipitation-level").value =
-      data.precipitation_level;
-    document.getElementById("precipitation-level-forecast").value =
-      data.precipitation_level_forecast;
+    document.getElementById("precipitation-level").value = data.precipitation_level;
+    document.getElementById("precipitation-level-forecast").value = data.precipitation_level_forecast;
 
     document.getElementById("max-pump-time").value = data.max_pump_time;
     document.getElementById("max-valve1-time").value = data.max_valve1_time;
     document.getElementById("max-valve2-time").value = data.max_valve2_time;
+    document.getElementById("max-action-time").value = data.max_action_time;
+
+    document.getElementById("action_active").checked = data.action_active;
 
     // Weather API Settings
     document.getElementById("weather-channel").value = data.weather_channel;
     if (data.weather_channel === "openweather") {
       document.getElementById("openweather-form").style.display = "block";
-      document.getElementById("metehomatics-form").style.display = "none";
-      document.getElementById("wether-op-api-key-ow").value = data.api_key;
+      document.getElementById("meteomatics-form").style.display = "none";
+      document.getElementById("weather-op-api-key-ow").value = data.api_key;
       document.getElementById("longitude-ow").value = data.longitude;
       document.getElementById("latitude-ow").value = data.latitude;
       document.getElementById("rain_duration_past_ow").value = data.rain_duration_past;
       document.getElementById("rain_duration_forecast_ow").value = data.rain_duration_forecast;
-    } else if (data.weather_channel === "metehomatics") {
+    } else {
       document.getElementById("openweather-form").style.display = "none";
-      document.getElementById("metehomatics-form").style.display = "block";
-      document.getElementById("wether-op-api-key-meteo").value = data.api_key;
-      document.getElementById("wether-metheo-user").value = data.metehomatics_user;
-      document.getElementById("wether-metheo-pw").value = data.metehomatics_password;
+      document.getElementById("meteomatics-form").style.display = "block";
+      document.getElementById("weather-op-api-key-meteo").value = data.api_key;
+      document.getElementById("weather-meteo-user").value = data.meteomatics_user;
+      document.getElementById("weather-meteo-pw").value = data.meteomatics_password;
       document.getElementById("longitude-meteo").value = data.longitude;
       document.getElementById("latitude-meteo").value = data.latitude;
       document.getElementById("rain_duration_past_meteo").value = data.rain_duration_past;
@@ -766,6 +878,51 @@ async function saveSettings(event, formId) {
     }
   } catch (error) {
     console.error("Error sending settings:", error);
+  }
+}
+
+async function toggleSetActionEnable() {
+  const enabledStatus = document.getElementById("action_active").checked;
+  const data = {
+    status: enabledStatus,
+  };
+
+  try {
+    const response = await fetch("/activateAction", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+    const result = await response.json();
+    console.log("Action controlls active: ", result.status);
+    if (result.status) {
+      const actionElements = document.querySelectorAll('.actionEnabled');
+      actionElements.forEach(element => {
+        element.style.display = "inline";
+      });
+      createAlert(
+        "Gespeichert",
+        "Action Elemente werden angezeigt!",
+        "success",
+        true,
+        true
+      );
+    } else {
+      const actionElements = document.querySelectorAll('.actionEnabled');
+      actionElements.forEach(element => {
+        element.style.display = "none";
+      });
+      createAlert(
+        "Gespeichert",
+        "Action Elemente werden nicht mehr angezeigt",
+        "warning",
+        true,
+        true);
+    }
+  } catch (error) {
+    console.error("Error on toggle action controll active:", error);
   }
 }
 

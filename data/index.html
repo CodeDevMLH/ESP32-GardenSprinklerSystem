@@ -39,6 +39,13 @@
       <button class="btn-cancel" id="cancelButton">Abbrechen</button>
     </div>
   </div>
+  <div id="modalEmergencyOverlay" class="modal-overlay">
+    <div class="modal">
+      <h2>NOTHALT</h2>
+      <p>Durch klicken auf Bestätigen wird der Nothalt aufgehoben</p>
+      <button class="btn-confirm" id="confirmButtonEmergency">Bestätigen</button>
+    </div>
+  </div>
 
   <div class="container" id="home-content">
     <h2><i class="fas fa-home icon"></i>Startseite</h2>
@@ -50,11 +57,11 @@
       Luftfeuchte und Bodenfeuchtigkeit
     </h2>
     <p>
-      <span class="dht-labels">Temperatur: </span>
+      <span class="dht-lables">Temperatur: </span>
       <span id="temperature">null</span>
     </p>
     <p>
-      <span class="dht-labels">Luftfeuchte: </span>
+      <span class="dht-lables">Luftfeuchte: </span>
       <span id="humidity">null</span>
     </p>
     <p>
@@ -75,32 +82,35 @@
 
     <h2><i class="fas fa-info-circle icon"></i>Status</h2>
     <p>
-      <span class="status">Pumpe:</span>
+      <span>Pumpe:</span>
       <span id="stat_pumpe">null</span>
     </p>
     <p>
-      <span class="status">Ventil 1:</span>
+      <span>Ventil 1:</span>
       <span id="stat_kreis1">null</span>
     </p>
     <p>
-      <span class="status">Ventil 2:</span>
+      <span>Ventil 2:</span>
       <span id="stat_kreis2">null</span>
     </p>
     <p>
-      <span class="status">Timer Kreis 1:</span>
+      <span class="actionEnabled">Action:</span>
+      <span class="actionEnabled" id="stat_action">null</span>
+    </p>
+    <p>
+      <span>Timer Kreis 1:</span>
       <span id="kreis1-timer-stat">null</span>
     </p>
     <p>
-      <span class="status">Timer Kreis 2:</span>
+      <span>Timer Kreis 2:</span>
       <span id="kreis2-timer-stat">null</span>
     </p>
 
     <div>
       <h2><i class="fas fa-sliders-h icon"></i>Manuelle Steuerung</h2>
-      <input type="button" id="valve1-button" class="manualControl red" onclick="toggleValve1(this)"
-        value="Ventil 1 AN" />
-      <input type="button" id="valve2-button" class="manualControl red" onclick="toggleValve2(this)"
-        value="Ventil 2 AN" />
+      <input type="button" id="valve1-button" class="manualControl red" onclick="toggleValve1(this)" value="Ventil 1 AN" />
+      <input type="button" id="valve2-button" class="manualControl red" onclick="toggleValve2(this)" value="Ventil 2 AN" />
+      <input type="button" id="action-button" class="actionEnabled manualControl red" onclick="toggleAction(this)" value="Action AN" />
       <input type="button" id="pump-button" class="manualControl red" onclick="togglePump(this)" value="Pumpe AN" />
     </div>
 
@@ -399,22 +409,22 @@
     <br />
     <hr />
     <h4>Wetter-API Einstellungen</h4>
-    <form id="weather-form" onchange="saveWetherSettings(event, 'weather-form')">
+    <form id="weather-form" onchange="saveweatherSettings(event, 'weather-form')">
       <label for="weather-channel">Wetter API für Niederschlagsmenge der letzten Stunden:</label>
       <select name="weather_channel" id="weather-channel" onchange="toggleWeatherForm()">
         <option value="openweather" name="openweather">OpenWeather</option>
-        <option value="meteomatics" name="meteomatics">Metehomatics</option>
+        <option value="meteomatics" name="meteomatics">Meteomatics</option>
       </select>
     </form>
     <form id="openweather-form" style="display: block" onsubmit="saveSettings(event, 'openweather-form')">
-      <label for="wether-op-api-key-ow">OpenWeather API-Key:</label>
-      <input type="text" id="wether-op-api-key-ow" name="api_key" placeholder="apikey" value="" /><br />
+      <label for="weather-op-api-key-ow">OpenWeather API-Key:</label>
+      <input type="text" id="weather-op-api-key-ow" name="api_key" placeholder="apikey" value="" /><br />
       <label for="longitude-ow">Longitude:</label>
       <input type="number" id="longitude-ow" name="longitude" placeholder="9,123" value=""
-        step="0.00000000000001" /><br />
+        step="0.00001" /><br />
       <label for="latitude-ow">Latitude:</label>
       <input type="number" id="latitude-ow" name="latitude" placeholder="52,123" value=""
-        step="0.00000000000001" /><br />
+        step="0.00001" /><br />
       <label for="rain_duration_past_ow">Berücksichtige Niederschlag der letzten:</label>
       <input type="number" id="rain_duration_past_ow" name="rain_duration_past" placeholder="24" min="1" max="24"
         value="" /> Stunden<br />
@@ -424,19 +434,17 @@
       <input type="submit" value="Speichern" />
       <input type="reset" value="Reset" />
     </form>
-    <form id="metehomatics-form" style="display: none" onsubmit="saveSettings(event, 'metehomatics-form')">
-      <label for="wether-op-api-key-meteo">OpenWeather API-Key:</label>
-      <input type="text" id="wether-op-api-key-meteo" name="api_key" placeholder="apikey" value="" /><br />
-      <label for="wether-metheo-user">Metheomatics-Benutzername:</label>
-      <input type="text" id="wether-metheo-user" name="metheo_user" placeholder="username" value="" /><br />
-      <label for="wether-metheo-pw">Metheomatics-Passwort:</label>
-      <input type="text" id="wether-metheo-pw" name="metheo_pw" placeholder="password" value="" /><br />
+    <form id="meteomatics-form" style="display: none" onsubmit="saveSettings(event, 'meteomatics-form')">
+      <label for="weather-op-api-key-meteo">OpenWeather API-Key:</label>
+      <input type="text" id="weather-op-api-key-meteo" name="api_key" placeholder="apikey" value="" /><br />
+      <label for="weather-meteo-user">Meteomatics-Benutzername:</label>
+      <input type="text" id="weather-meteo-user" name="meteo_user" placeholder="username" value="" /><br />
+      <label for="weather-meteo-pw">Meteomatics-Passwort:</label>
+      <input type="text" id="weather-meteo-pw" name="meteo_pw" placeholder="password" value="" /><br />
       <label for="longitude-meteo">Longitude:</label>
-      <input type="number" id="longitude-meteo" name="longitude" placeholder="9,123" value=""
-        step="0.00000000000001" /><br />
+      <input type="number" id="longitude-meteo" name="longitude" placeholder="9,123" value="" step="0.00001" /><br />
       <label for="latitude-meteo">Latitude:</label>
-      <input type="number" id="latitude-meteo" name="latitude" placeholder="52,123" value=""
-        step="0.00000000000001" /><br />
+      <input type="number" id="latitude-meteo" name="latitude" placeholder="52,123" value="" step="0.00001" /><br />
       <label for="rain_duration_past_meteo">Berücksichtige Niederschlag der letzten:</label>
       <input type="number" id="rain_duration_past_meteo" name="rain_duration_past" placeholder="24" min="1" max="24"
         value="" /> Stunden<br />
@@ -448,7 +456,7 @@
     </form>
     <hr />
     <form id="precipitation-form" onsubmit="saveSettings(event, 'precipitation-form')">
-      <label for="precipitation-level">Grenze für Niederschlagsmenge bei automatischer Sprengung:</label>
+      <label for="precipitation-level">Grenze für vergangene Niederschlagsmenge bei automatischer Sprengung:</label>
       <input type="number" id="precipitation-level" name="precipitation_level" min="1" max="1000" placeholder="20" />
       mm<br />
       <label for="precipitation-level-forecast">Grenze für vorraussichtlicher Niederschlagsmenge bei automatischer
@@ -460,6 +468,16 @@
     </form>
     <br />
     <hr />
+    <h4>Action Kreislauf/Button/Funktionen aktivieren</h4>
+    <form id="action-form">
+      <label class="switch">
+        <span class="switch-label">Action aktiv:</span>
+        <input type="checkbox" id="action_active" onchange="toggleSetActionEnable()">
+        <span class="slider round"></span>
+      </label>
+    </form>
+    <br />
+    <hr />
     <h4>Sicherheits Einstellungen</h4>
     <form id="security-form" onsubmit="saveSettings(event, 'security-form')">
       <label for="max-pump-time">Pumpe abschalten bei überschreiten der Betriebszeit von:</label>
@@ -468,6 +486,8 @@
       <input type="number" id="max-valve1-time" name="max_valve1_time" min="5" max="180" placeholder="75" /> min<br />
       <label for="max-valve2-time">Ventil 2 abschalten bei überschreiten der Betriebszeit von:</label>
       <input type="number" id="max-valve2-time" name="max_valve2_time" min="5" max="180" placeholder="75" /> min<br />
+      <label class="actionEnabled" for="max-action-time">Action abschalten bei überschreiten der Betriebszeit von:</label>
+      <input class="actionEnabled" type="number" id="max-action-time" name="max_action_time" min="5" max="180" placeholder="75" /><span class="actionEnabled"> min</span><br />
       <input type="submit" value="Speichern" />
       <input type="reset" value="Reset" />
     </form>

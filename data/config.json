@@ -7,8 +7,8 @@
   "weather": {
     "weather_channel": "openweather",
     "API_KEY": "api_key",
-    "METHEO_USERNAME": "username",
-    "METHEO_PASSWORD": "password",
+    "METEO_USERNAME": "username",
+    "METEO_PASSWORD": "password",
     "LATITUDE": 52.3759,
     "LONGITUDE": 9.7320,
     "DURATION_PAST": 24,
@@ -20,6 +20,7 @@
     "ALL": false,
     "EN": false
   },
+  "ACTION_ENABLED": false,
   "AUTOMATIC_MODE": false,
   "PRECIPITATION_MODE": false,
   "PRECIPITATION_MODE_FORECAST": false,
@@ -29,6 +30,7 @@
   "MAX_PUMP_TIME": 180,
   "MAX_VALVE1_TIME": 180,
   "MAX_VALVE2_TIME": 180,
+  "MAX_ACTION_TIME": 180,
   "MON": {
     "ON": false,
     "TIME": {

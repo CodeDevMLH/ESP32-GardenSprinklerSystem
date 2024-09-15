@@ -7,6 +7,7 @@
 #include <LittleFS.h>
 
 #include "config.h"
+#include "WebSerialUtils.h"
 
 extern Config config;
 extern const char *configFilePath;

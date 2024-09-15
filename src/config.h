@@ -13,8 +13,8 @@ struct NetworkConfig {
 struct WeatherConfig {
   String weatherChannel;
   String API_KEY;
-  String METHEO_USERNAME;
-  String METHEO_PASSWORD;
+  String METEO_USERNAME;
+  String METEO_PASSWORD;
   float LATITUDE;
   float LONGITUDE;
   int DURATION_PAST;
@@ -54,6 +54,7 @@ struct Config {
   WeatherConfig weather;
   TimerConfig TIMER;
 
+  bool ACTION_ENABLED;
   bool AUTOMATIC_MODE;
   bool PRECIPITATION_MODE;
   bool PRECIPITATION_MODE_FORECAST;
@@ -64,6 +65,7 @@ struct Config {
   int MAX_PUMP_TIME;
   int MAX_VALVE1_TIME;
   int MAX_VALVE2_TIME;
+  int MAX_ACTION_TIME;
 
   DayConfig MON;
   DayConfig TUE;

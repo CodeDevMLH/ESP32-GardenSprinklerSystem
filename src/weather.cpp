@@ -4,70 +4,81 @@ int sunsetTime = -1;
 float rain1h = 0.0;
 float rain24h = 0.0;
 float rainForecast = 0.0;
-float calculatedRain24h = 0.0;
+float calculatedRain = 0.0;
 
 float hourlyRainPast[24] = {0.0}; // save last 24 hours of rain data
 int currentHourIndex = 0;
 
 bool alreadyUpdated = false;
 
+// MARK: getWeatherOpenWeather
 void getWeatherOpenWeather() {
     HTTPClient http;
     String url = "http://api.openweathermap.org/data/2.5/weather?lat=" + String(config.weather.LATITUDE) + "&lon=" + String(config.weather.LONGITUDE) + "&appid=" + config.weather.API_KEY + "&units=metric";
     http.begin(url);
     int httpCode = http.GET();
 
-    if (httpCode > 0) {
+    if (httpCode == 200) {
         String payload = http.getString();
-        Serial.println("Recieved weather data OpenWeather");
+        println("Recieved weather data OpenWeather");
 
         JsonDocument doc;
         DeserializationError error = deserializeJson(doc, payload);
         if (!error) {
             if (doc["rain"]["1h"]) {
                 rain1h = doc["rain"]["1h"].as<float>();
-                Serial.printf("Rain in last hour OpenWeather: %f mm\n", rain1h);
+                printFormatted("Rain in last hour OpenWeather: %f mm\n", rain1h);
             } else {
-                Serial.println("No rain data for the last hour OpenWeather");
+                println("No rain data for the last hour OpenWeather");
                 rain1h = 0.0;
             }
 
             if (doc["sys"]["sunset"]) {
                 sunsetTime = convertSunsetTimeTtoInt(doc["sys"]["sunset"]);
-                Serial.printf("Sunset time: %d\n", sunsetTime);
+                printFormatted("Sunset time: %d\n", sunsetTime);
             } else {
-                Serial.println("No sunset data OpenWeather");
+                println("No sunset data OpenWeather");
             }
         } else {
-            Serial.printf("deserializeJson() failed: %s", error.f_str());
+            printFormatted("deserializeJson() failed: %s\n", error.f_str());
+            rain1h = 0.0;
         }
+        doc.clear();
+    } else if (httpCode == 401) {
+        println("Error: Invalid API key");
+    } else if (httpCode == 403) {
+        println("Error: Access denied or request limit reached");
     } else {
-        Serial.printf("Error on HTTP request: %s", httpCode);
+        printFormatted("Error on HTTP request: %s\n", httpCode);
     }
     http.end();
 }
 
+// MARK: getWeatherMeteo24H
 bool getWeatherMeteo24H() {
     if (config.weather.DURATION_PAST == 24 && config.weather.weatherChannel == "meteomatics") {
         getWeatherMeteomatics();
-        calculatedRain24h = rain24h;
+        calculatedRain = rain24h;
         return true;
     }
+    getWeatherMeteomatics();
     return false;
 }
 
+// MARK: updateCalculatedRainDataWithDuration
 bool updateCalculatedRainDataWithDuration() {
     if (checkUpdateRainData()) {
-        Serial.println("Update calculated rain data");
+        println("Update calculated rain data");
         if (config.weather.DURATION_PAST <= 0) {
-            Serial.println("Past duration must be greater than 0.");
+            println("Past duration must be greater than 0.");
             return false;
         }
 
-        if (config.weather.weatherChannel == "openweather") {
-            getWeatherOpenWeather();
+        if (getWeatherMeteo24H()) {
+            printFormatted("Rain last %dh: %f mm\n", config.weather.DURATION_PAST, calculatedRain);
+            return true;
         } else {
-            getWeatherMeteomatics();
+            getWeatherOpenWeather();
         }
 
         if (!updateLocaleTime()) {
@@ -78,19 +89,20 @@ bool updateCalculatedRainDataWithDuration() {
         currentHourIndex = (currentHourIndex + 1) % config.weather.DURATION_PAST;
 
         for (int i = 0; i < config.weather.DURATION_PAST; i++) {
-            calculatedRain24h += hourlyRainPast[i];
+            calculatedRain += hourlyRainPast[i];
         }
-        Serial.printf("Rain last %dh: %f mm\n", config.weather.DURATION_PAST, calculatedRain24h);
+        printFormatted("Rain last %dh: %f mm\n", config.weather.DURATION_PAST, calculatedRain);
         return true;
     }
     return false;
 }
 
+// MARK: checkUpdateRainData
 bool checkUpdateRainData() {
     if (updateLocaleTime()) {
         if (timeinfo.tm_min == 0 && alreadyUpdated == false) { // every begin of hour
             alreadyUpdated = true;
-            Serial.println("Time to update rain data");
+            println("Time to update rain data");
             return true;
         } else if (timeinfo.tm_min != 0) {
             alreadyUpdated = false;
@@ -100,9 +112,46 @@ bool checkUpdateRainData() {
     return false;
 }
 
+// MARK: getCalculatedWeatherUpdateNow
+bool getCalculatedWeatherUpdateNow() {
+        println("Update calculated rain data");
+        if (config.weather.DURATION_PAST <= 0) {
+            println("Past duration must be greater than 0.");
+            return false;
+        }
+
+        if (getWeatherMeteo24H()) {
+            printFormatted("Rain last %dh: %f mm\n", config.weather.DURATION_PAST, calculatedRain);
+            return true;
+        } else {
+            getWeatherOpenWeather();
+        }
+
+        if (!updateLocaleTime()) {
+            return false;
+        }
+
+        hourlyRainPast[currentHourIndex] = rain1h;
+        currentHourIndex = (currentHourIndex + 1) % config.weather.DURATION_PAST;
+
+        for (int i = 0; i < config.weather.DURATION_PAST; i++) {
+            calculatedRain += hourlyRainPast[i];
+        }
+        printFormatted("Rain last %dh: %f mm\n", config.weather.DURATION_PAST, calculatedRain);
+        return true;
+}
+
+// MARK: getWeatherUpdateNow
+void getWeatherUpdateNow() {
+    println("Updating weather data now");
+    getWeatherForecastOpenWeather();
+    getCalculatedWeatherUpdateNow();
+}
+
+// MARK: getWeatherForecastOpenWeather
 void getWeatherForecastOpenWeather() {
     if (config.weather.DURATION_FORECAST <= 0) {
-        Serial.println("Forecast duration must be greater than 0.");
+        println("Forecast duration must be greater than 0.");
         return;
     }
 
@@ -113,9 +162,9 @@ void getWeatherForecastOpenWeather() {
     http.begin(url);
     int httpCode = http.GET();
 
-    if (httpCode > 0) {
+    if (httpCode == 200) {
         String payload = http.getString();
-        Serial.println("Recieved forecast weather data: \n" + payload);
+        println("Recieved forecast openweather data:");
 
         JsonDocument doc;
         DeserializationError error = deserializeJson(doc, payload);
@@ -130,53 +179,96 @@ void getWeatherForecastOpenWeather() {
                     }
                 }
             }
+            printFormatted("Forecast rain next %dh: %f mm\n", config.weather.DURATION_FORECAST, rainForecast);
         } else {
-            Serial.printf("deserializeJson() failed: %s", error.f_str());
+            printFormatted("deserializeJson() failed: %s\n", error.f_str());
+            rainForecast = 0.0;
         }
+        doc.clear();
+    } else if (httpCode == 401) {
+        println("Error: Invalid API key");
+    } else if (httpCode == 403) {
+        println("Error: Access denied or request limit reached");
     } else {
-        Serial.printf("Error on HTTP request: %s", httpCode);
+        printFormatted("Error on HTTP request: %s\n", httpCode);
     }
     http.end();
 }
 
+// MARK: getWeatherMeteomatics
 void getWeatherMeteomatics() {
     HTTPClient http;
-    String datetime = "now";
-    //String url = "https://api.meteomatics.com/" + datetime + "/precip_1h:mm,precip_24h:mm,sunset:ux/" + String(config.weather.LATITUDE) + "," + String(config.weather.LONGITUDE) + "/json?model=mix";
-    String url = "https://api.meteomatics.com/" + datetime + "/precip_1h:mm,precip_24h:mm,sunset:ux/" + String(config.weather.LATITUDE) + "," + String(config.weather.LONGITUDE);
+    String url = "https://api.meteomatics.com/now/precip_1h:mm,precip_24h:mm,sunset:ux/" + String(config.weather.LATITUDE) + "," + String(config.weather.LONGITUDE) + "/json?model=mix";
     http.begin(url);
-    http.setAuthorization(config.weather.METHEO_USERNAME.c_str(), config.weather.METHEO_PASSWORD.c_str());
+    http.setAuthorization(config.weather.METEO_USERNAME.c_str(), config.weather.METEO_PASSWORD.c_str());
 
     int httpCode = http.GET();
-    if (httpCode > 0) {
+    if (httpCode == 200) {
         String payload = http.getString();
-        Serial.println("Recieved weather data meteomatics");
+        println("Recieved weather data meteomatics");
 
         JsonDocument doc;
         DeserializationError error = deserializeJson(doc, payload);
 
         if (!error) {
-            for (JsonObject data : doc["data"].as<JsonArray>()) {
-                String parameter = data["parameter"].as<String>();
-                if (parameter == "precip_1h:mm") {
-                    rain1h = data["coordinates"][0]["dates"][0]["value"].as<float>();
-                    Serial.printf("Rain in last hour meteomatics: %s mm", rain1h);
-                }
-                if (parameter == "precip_24h:mm") {
-                    rain24h = data["coordinates"][0]["dates"][0]["value"].as<float>();
-                    Serial.printf("Rain in last 24 hours meteomatics: %s mm", rain24h);
-                }
-                if (parameter == "sunset:ux") {
-                    sunsetTime = convertSunsetTimeTtoInt(data["coordinates"][0]["dates"][0]["value"]);
-                    Serial.printf("Sunset time meteomatics: %d", sunsetTime);
-                }
+            if (doc["data"][0]["parameter"] == "precip_1h:mm") {
+                rain1h = doc["data"][0]["coordinates"][0]["dates"][0]["value"].as<float>();
+                printFormatted("Rain in last hour meteomatics: %f mm\n", rain1h);
+            } else {
+                println("No rain data for the last hour meteomatics");
+                rain1h = 0.0;
             }
-        } else {
-            Serial.printf("deserializeJson() failed: %s", error.f_str());
-        }
 
+            if (doc["data"][1]["parameter"] == "precip_24h:mm") {
+                rain24h = doc["data"][1]["coordinates"][0]["dates"][0]["value"].as<float>();
+                printFormatted("Rain in last 24 hours meteomatics: %f mm\n", rain24h);
+            } else {
+                println("No rain data for the last 24 hours meteomatics");
+                rain24h = 0.0;
+            }
+
+            if (doc["data"][2]["parameter"] == "sunset:ux") {
+                sunsetTime = convertSunsetTimeTtoInt(doc["data"][2]["coordinates"][0]["dates"][0]["value"]);
+                printFormatted("Sunset time meteomatics: %d\n", sunsetTime);
+            } else {
+                println("No sunset data meteomatics");
+                sunsetTime = -1;
+            }
+
+            //for (JsonObject data : doc["data"].as<JsonArray>()) {
+            //    String parameter = data["parameter"].as<String>();
+            //    if (parameter == "precip_1h:mm") {
+            //        rain1h = data["coordinates"][0]["dates"][0]["value"].as<float>();
+            //        printFormatted("Rain in last hour meteomatics: %f mm\n", rain1h);
+            //    } else {
+            //        println("No rain data for the last hour meteomatics");
+            //        rain1h = 0.0;
+            //    }
+            //    if (parameter == "precip_24h:mm") {
+            //        rain24h = data["coordinates"][0]["dates"][0]["value"].as<float>();
+            //        printFormatted("Rain in last 24 hours meteomatics: %f mm\n", rain24h);
+            //    } else {
+            //        println("No rain data for the last 24 hours meteomatics");
+            //        rain24h = 0.0;
+            //    }
+            //    if (parameter == "sunset:ux") {
+            //        sunsetTime = convertSunsetTimeTtoInt(data["coordinates"][0]["dates"][0]["value"]);
+            //        printFormatted("Sunset time meteomatics: %d\n", sunsetTime);
+            //    } else {
+            //        println("No sunset data meteomatics");
+            //        sunsetTime = -1;
+            //    }
+            //}
+        } else {
+            printFormatted("deserializeJson() failed: %s\n", error.f_str());
+            rain1h = 0.0;
+            rain24h = 0.0;
+        }
+        doc.clear();
+    } else if (httpCode == 401) {
+        println("Wrong credentials: HTTP 401 Unauthorized.");
     } else {
-        Serial.printf("Error on HTTP request: %s", httpCode);
+        printFormatted("Error on HTTP request: %s\n", httpCode);
     }
     http.end();
 }

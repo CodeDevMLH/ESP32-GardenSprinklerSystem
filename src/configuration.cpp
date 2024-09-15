@@ -12,8 +12,8 @@ bool saveConfig(const char *path) {
 
   doc["weather"]["weather_channel"] = config.weather.weatherChannel;
   doc["weather"]["API_KEY"] = config.weather.API_KEY;
-  doc["weather"]["METHEO_USERNAME"] = config.weather.METHEO_USERNAME;
-  doc["weather"]["METHEO_PASSWORD"] = config.weather.METHEO_PASSWORD;
+  doc["weather"]["METEO_USERNAME"] = config.weather.METEO_USERNAME;
+  doc["weather"]["METEO_PASSWORD"] = config.weather.METEO_PASSWORD;
   doc["weather"]["LATITUDE"] = config.weather.LATITUDE;
   doc["weather"]["LONGITUDE"] = config.weather.LONGITUDE;
   doc["weather"]["DURATION_PAST"] = config.weather.DURATION_PAST;
@@ -24,6 +24,7 @@ bool saveConfig(const char *path) {
   doc["timer"]["TIME"] = config.TIMER.TIME;
   doc["timer"]["ALL"] = config.TIMER.ALL;
 
+  doc["ACTION_ENABLED"] = config.ACTION_ENABLED;
   doc["AUTOMATIC_MODE"] = config.AUTOMATIC_MODE;
   doc["PRECIPITATION_MODE"] = config.PRECIPITATION_MODE;
   doc["PRECIPITATION_MODE_FORECAST"] = config.PRECIPITATION_MODE_FORECAST;
@@ -34,6 +35,7 @@ bool saveConfig(const char *path) {
   doc["MAX_PUMP_TIME"] = config.MAX_PUMP_TIME;
   doc["MAX_VALVE1_TIME"] = config.MAX_VALVE1_TIME;
   doc["MAX_VALVE2_TIME"] = config.MAX_VALVE2_TIME;
+  doc["MAX_ACTION_TIME"] = config.MAX_ACTION_TIME;
 
   doc["MON"]["ON"] = config.MON.ON;
   doc["MON"]["TIME"]["ON_TIME"] = config.MON.TIME.ON_TIME;
@@ -79,18 +81,18 @@ bool saveConfig(const char *path) {
   // File file = LittleFS.open(configFileName, "r");
   File file = LittleFS.open(path, "w");
   if (!file) {
-    Serial.println("Failed to open config file for writing");
+    println("Failed to open config file for writing");
     return false;
   }
 
   if (serializeJson(doc, file) == 0) {
-    Serial.println("Failed to write config to file");
+    println("Failed to write config to file");
     file.close();
     return false;
   }
   file.close();
 
-  Serial.println("Config saved");
+  println("Config saved");
   return true;
 }
 
@@ -98,14 +100,14 @@ bool loadConfig(const char *path) {
   // File file = LittleFS.open(configFileName, "r");
   File file = LittleFS.open(path, "r");
   if (!file) {
-    Serial.println("Failed to open config file");
+    println("Failed to open config file");
     return false;
   }
 
   // size_t size = file.size();
   // if (size > 4096)
   //{
-  //     Serial.println("Config file size is too large");
+  //     println("Config file size is too large");
   //     file.close();
   //     return false;
   // }
@@ -123,12 +125,12 @@ bool loadConfig(const char *path) {
   // delete[] content; // Free the allocated memory from new statement
 
   if (error) {
-    Serial.println("Failed to parse config file");
-    Serial.println(error.c_str());
+    println("Failed to parse config file");
+    println(error.c_str());
     return false;
   }
 
-  Serial.println("Loading config...");
+  println("Loading config...");
 
   config.network.SSID = doc["network"]["SSID"].as<String>();
   config.network.HOSTNAME = doc["network"]["HOSTNAME"].as<String>();
@@ -136,10 +138,10 @@ bool loadConfig(const char *path) {
 
   config.weather.weatherChannel = doc["weather"]["weather_channel"].as<String>();
   config.weather.API_KEY = doc["weather"]["API_KEY"].as<String>();
-  config.weather.METHEO_USERNAME = doc["weather"]["METHEO_USERNAME"].as<String>();
-  config.weather.METHEO_PASSWORD = doc["weather"]["METHEO_PASSWORD"].as<String>();
-  config.weather.LATITUDE = doc["weather"]["LATITUDE"].as<float>();
-  config.weather.LONGITUDE = doc["weather"]["LONGITUDE"].as<float>();
+  config.weather.METEO_USERNAME = doc["weather"]["METEO_USERNAME"].as<String>();
+  config.weather.METEO_PASSWORD = doc["weather"]["METEO_PASSWORD"].as<String>();
+  config.weather.LATITUDE = doc["weather"]["LATITUDE"];
+  config.weather.LONGITUDE = doc["weather"]["LONGITUDE"];
   config.weather.DURATION_PAST = doc["weather"]["DURATION_PAST"].as<int>();
   config.weather.DURATION_FORECAST = doc["weather"]["DURATION_FORECAST"].as<int>();
 
@@ -148,6 +150,7 @@ bool loadConfig(const char *path) {
   config.TIMER.TIME = doc["timer"]["TIME"].as<int>();
   config.TIMER.ALL = doc["timer"]["ALL"].as<bool>();
 
+  config.ACTION_ENABLED = doc["ACTION_ENABLED"].as<bool>();
   config.AUTOMATIC_MODE = doc["AUTOMATIC_MODE"].as<bool>();
   config.PRECIPITATION_MODE = doc["PRECIPITATION_MODE"].as<bool>();
   config.PRECIPITATION_MODE_FORECAST = doc["PRECIPITATION_MODE_FORECAST"].as<bool>();
@@ -158,6 +161,7 @@ bool loadConfig(const char *path) {
   config.MAX_PUMP_TIME = doc["MAX_PUMP_TIME"].as<int>();
   config.MAX_VALVE1_TIME = doc["MAX_VALVE1_TIME"].as<int>();
   config.MAX_VALVE2_TIME = doc["MAX_VALVE2_TIME"].as<int>();
+  config.MAX_ACTION_TIME = doc["MAX_ACTION_TIME"].as<int>();
 
   config.MON.ON = doc["MON"]["ON"].as<bool>();
   config.MON.TIME.ON_TIME = doc["MON"]["TIME"]["ON_TIME"].as<int>();
@@ -200,7 +204,7 @@ bool loadConfig(const char *path) {
   config.mqtt.PASSWORD = doc["mqtt"]["PASSWORD"].as<String>();
   config.mqtt.TOPIC = doc["mqtt"]["TOPIC"].as<String>();
 
-  Serial.println("config loaded");
+  println("config loaded");
 
   return true;
 }
@@ -214,8 +218,8 @@ bool resetConfig() {
   // Weather Config
   config.weather.weatherChannel = "openweather";
   config.weather.API_KEY = "api_key";
-  config.weather.METHEO_USERNAME = "username";
-  config.weather.METHEO_PASSWORD = "password";
+  config.weather.METEO_USERNAME = "username";
+  config.weather.METEO_PASSWORD = "password";
   config.weather.LATITUDE = 52.3759;
   config.weather.LONGITUDE = 9.7320;
   config.weather.DURATION_PAST = 24;
@@ -224,10 +228,11 @@ bool resetConfig() {
   // Timer Config
   config.TIMER.DURATION = 30;
   config.TIMER.TIME = -1;
-  config.TIMER.Time_EN = false; // Nicht in JSON spezifiziert, auf false gesetzt
+  config.TIMER.Time_EN = false;
   config.TIMER.ALL = false;
 
   // Other settings
+  config.ACTION_ENABLED = false;
   config.AUTOMATIC_MODE = false;
   config.PRECIPITATION_MODE = false;
   config.PRECIPITATION_MODE_FORECAST = false;
@@ -238,6 +243,7 @@ bool resetConfig() {
   config.MAX_PUMP_TIME = 180;
   config.MAX_VALVE1_TIME = 180;
   config.MAX_VALVE2_TIME = 180;
+  config.MAX_ACTION_TIME = 180;
 
   // Day configs
   DayConfig *dayConfigs[] = {&config.MON, &config.TUE, &config.WED, &config.THU,
@@ -258,6 +264,6 @@ bool resetConfig() {
 
   saveConfig(configFilePath);
 
-  Serial.println("and resetted");
+  println("and resetted");
   return true;
 }

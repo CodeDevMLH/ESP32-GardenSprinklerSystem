@@ -18,11 +18,15 @@ bool updateLocaleTime();
 bool isTimeToSync(int hour, int minute);
 int getCurrentTimeInt();
 bool isTimeSlot(int startTime, int endTime);
+bool compareTime(int currentTime, int endTime);
+int convertTimeToInt(const String &timeStr);
+int calculateTime(int time, int duration);
 int getHour();
 int getMinute();
 int getDayInt();
 String getDayNameShort();
 String asctime();
 String strftime();
+String convertTimeToString(int timeInt);
 
 #endif  // NTP_H

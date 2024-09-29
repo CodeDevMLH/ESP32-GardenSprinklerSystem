@@ -16,4 +16,6 @@ Optional, the web interface displays current sensor reading e.g. temperature, hu
 - ~~nice success/error/info/confirm alerts~~
 - ~~all Serial.prints also on WebSerial~~
 - ~~add dark mode~~
+- be able, to select ESP pins for all outputs/inputs/sensors
+- selection of up to X circels, which will be displayed corresponding to count of circles correctly in adaptive UI (timetable, buttons etc.)
 - and probably much more...

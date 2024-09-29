@@ -18,12 +18,33 @@ let pageLoaded = false;
 document.addEventListener('DOMContentLoaded', () => {
     domReady = true;
     if (pageLoaded) checkActionEnabled();
+
+    const savedMode = localStorage.getItem('darkMode');
+    if (savedMode) {
+        switchMode(savedMode === 'enabled');
+        document.getElementById('design_mode').checked = (savedMode === 'enabled');
+    } else {
+        const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        switchMode(prefersDarkMode);
+        document.getElementById('design_mode').checked = prefersDarkMode;
+    }
 });
 
 window.addEventListener('load', () => {
     pageLoaded = true;
     if (domReady) checkActionEnabled();
 });
+
+// Dark Mode Umschalten
+function switchMode(isDark) {
+  if (isDark) {
+      document.body.classList.add('dark-mode');
+      localStorage.setItem('darkMode', 'enabled');
+  } else {
+      document.body.classList.remove('dark-mode');
+      localStorage.setItem('darkMode', 'disabled');
+  }
+}
 
 //MARK: Section Control
 function showSection(section) {
@@ -71,6 +92,11 @@ function loadData() {
 }
 
 //MARK: UI Controls
+function toggleSetDarkMode() {
+  const darkMode = document.getElementById("design_mode").checked;
+  switchMode(darkMode);
+}
+
 // function to show all action elements
 async function checkActionEnabled() {
     try {

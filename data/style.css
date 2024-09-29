@@ -10,11 +10,134 @@ body {
 }
 
 body {
+  background-color: white;
+  color: black;
+  transition: background-color 0.2s, color 0.2s;
   font-family: Arial, sans-serif;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
 }
+/*
+MARK: DARK MODE
+*/
+body.dark-mode {
+  background-color: #121212;
+  color: #e0e0e0;
+}
+
+/* Header*/
+body.dark-mode header {
+  background-color: #316e33; /* #1f1f1f */
+  color: #e0e0e0;
+}
+
+/* Navbar*/
+body.dark-mode nav {
+  background-color: #333333;
+}
+
+body.dark-mode nav a {
+  color: #e0e0e0;
+}
+
+body.dark-mode nav a:hover {
+  background-color: #555555;
+}
+
+body.dark-mode nav a.active {
+  background-color: #444444;
+}
+
+body.dark-mode nav a.emergency-stop:hover {
+  background-color: rgb(148, 0, 0);
+  color: white;
+}
+
+/* Footer*/
+body.dark-mode .footer {
+  background-color: #1f1f1f;
+  color: #e0e0e0;
+}
+
+/* Tabellen*/
+body.dark-mode table {
+  background-color: #1e1e1e;
+  color: #e0e0e0;
+  border-color: #333333;
+}
+
+body.dark-mode th {
+  background-color: #2a2a2a;
+}
+
+body.dark-mode tr:nth-child(even) {
+  background-color: #2a2a2a;
+}
+
+/* Formulare*/
+body.dark-mode input[type="submit"]:hover {
+  background-color: #4caf50;
+}
+
+body.dark-mode input[type="reset"]:hover,
+body.dark-mode #stop-timer[type="button"]:hover {
+  background-color: #b02a2a;
+}
+
+body.dark-mode input[type="button"]:hover {
+  background-color: #046c96;
+}
+
+
+body.dark-mode input[type="text"] {
+  background-color: #707070;
+  color: #e0e0e0;
+}
+body.dark-mode input[type="number"] {
+  background-color: #707070;
+  color: #e0e0e0;
+}
+body.dark-mode input[type="time"] {
+  background-color: #707070;
+  color: #e0e0e0;
+}
+
+body.dark-mode #upload-form input[type="file"] {
+  background-color: #707070;
+  border: 2px solid #575757;
+}
+
+body.dark-mode #upload-form input[type="file"]:hover {
+  border-color: #888;
+}
+
+body.dark-mode select {
+  border-color: #333333;
+  background-color: #707070;
+  color: #e0e0e0;
+}
+
+/* Modals*/
+body.dark-mode .modal {
+  background-color: #2a2a2a;
+  color: #e0e0e0;
+}
+
+/* Slider*/
+body.dark-mode .sliderrange {
+  background-color: #444444;
+}
+
+body.dark-mode .sliderrange::-webkit-slider-thumb {
+  background-color: #0492bd;
+}
+
+body.dark-mode .sliderrange::-moz-range-thumb {
+  background-color: #0492bd;
+}
+/* Dark Mode end*/
+
 
 header {
   background-color: #4caf50;
@@ -133,6 +256,7 @@ input[type="button"].actionEnabled {
   display: inline-flex;
   align-items: center; /* Vertikale Ausrichtung */
   gap: 0px; /* Abstand zwischen Schalter und Text */
+  cursor: pointer; /* Mauszeiger ändert sich zu Hand */
 }
 
 .switch input {
@@ -360,6 +484,9 @@ input[type="reset"]:active,
   background-color: #961f1f; /* Noch dunkleres Rot beim Klicken */
 }
 
+/*
+MARK: Buttons
+*/
 input[type="button"] {
   background-color: #008cba; /* Blaue Hintergrundfarbe für Button */
 }
@@ -395,6 +522,59 @@ input[type="button"].manualControl.green:active {
   background-color: #014a01; /* Dunkleres Grün beim Hover */
 }
 
+
+
+input[type="number"],
+input[type="text"],
+input[type="time"] {
+    padding: 5px;             /* Innenabstand für Text */
+    border: 2px solid #ccc;    /* Leicht grauer Rahmen */
+    border-radius: 5px;        /* Abgerundete Ecken */
+    box-sizing: border-box;    /* Padding wird in der Breite mit einberechnet */
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+input[type="number"].setting,
+input[type="text"].setting,
+input[type="time"].setting {
+    margin: 6px 0;             /* Außenabstand oben und unten */
+}
+
+/* Styling für den Fokus-Zustand */
+input[type="number"]:focus,
+input[type="text"]:focus,
+input[type="time"]:focus {
+    border-color: #4caf50;     /* Grüne Rahmenfarbe beim Fokus */
+    box-shadow: 0 0 5px rgba(76, 175, 80, 0.5); /* Grüner Schatten */
+    outline: none;
+}
+
+
+/*
+MARK: Selections
+*/
+/* Grundlegendes Styling für das Select-Element */
+select {
+  min-width: 130px;                  /* Volle Breite */
+  padding: 5px;                /* Innenabstand für Text */
+  margin: 8px 0;                /* Außenabstand oben und unten */
+  display: block;               /* Block-Element für sauberes Layout */
+  border: 2px solid #ccc;       /* Leicht grauer Rahmen */
+  border-radius: 5px;           /* Abgerundete Ecken */
+  background-color: white;      /* Weißer Hintergrund */
+  font-size: 16px;              /* Einheitliche Schriftgröße */
+  box-sizing: border-box;       /* Padding wird in der Breite mit einberechnet */
+  cursor: pointer; /* Mauszeiger ändert sich zu Hand */
+}
+
+/* Fokus-Zustand für das Select-Element */
+select:focus {
+  border-color: #4caf50;        /* Grüne Rahmenfarbe beim Fokus */
+  box-shadow: 0 0 5px rgba(76, 175, 80, 0.5); /* Grüner Schatten */
+  outline: none;                /* Entfernt den Standardfokusrahmen */
+}
+
+
 /*
 MARK: Time Input ResD
 */
@@ -412,10 +592,14 @@ MARK: Time Input ResD
   margin-bottom: 5px;
 }
 
+/*
+MARK: Upload Form
+*/
 #upload-form input[type="file"] {
   background-color: #f1f1f1; /* Helle Hintergrundfarbe */
   border: 2px solid #ccc; /* Grauer Rahmen */
   padding: 5px;
+  margin: 6px 0; 
   border-radius: 5px;
   cursor: pointer;
   font-size: 16px;

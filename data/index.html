@@ -372,41 +372,41 @@
     <h4>Config Datei Einstellungen</h4>
     <form id="upload-form">
       <label for="configfile">Config Datei auswählen:</label>
+      <br />
       <input type="file" id="configfile" name="configfile" accept=".json" required />
+      <br />
       <button type="button" onclick="uploadConfig()">Upload</button>
-    </form>
-    <br>
-    <input type="button" onclick="window.location.href='/download'; sendDownloadAlert();"
+      <input type="button" onclick="window.location.href='/download'; sendDownloadAlert();"
       value="Download config.json" />
-
-    <br />
+    </form>
     <hr />
     <h4>Netzwerk Einstellungen</h4>
     <form id="zeitserver-form" onsubmit="saveSettings(event, 'zeitserver-form')">
       <label for="zeitserver">Zeitserver URL:</label>
-      <input type="text" id="zeitserver" name="zeitserver" placeholder="ptbtime1.ptb.de" value="" /><br /><br />
+      <br />
+      <input type="text" id="zeitserver" name="zeitserver" class="setting" placeholder="ptbtime1.ptb.de" value="" /><br />
       <input type="submit" value="Speichern" />
       <input type="reset" value="Reset" />
     </form>
-    <br />
     <br />
     <form id="wifi-form" onsubmit="saveSettings(event, 'wifi-form')">
       <label for="wifi-ssid">SSID:</label>
-      <input type="text" id="wifi-ssid" name="wifi_ssid" placeholder="WiFi" value="" /><br />
+      <br />
+      <input type="text" id="wifi-ssid" name="wifi_ssid" class="setting" placeholder="WiFi" value="" /><br />
       <label for="wifi-pw">Password:</label>
-      <input type="text" id="wifi-pw" name="wifi_pw" placeholder="WiFi" value="****" /><br /><br />
+      <br />
+      <input type="text" id="wifi-pw" name="wifi_pw" class="setting" placeholder="WiFi" value="****" /><br />
       <input type="submit" value="Speichern" />
       <input type="reset" value="Reset" />
     </form>
-    <br />
     <br />
     <form id="hostname-form" onsubmit="saveSettings(event, 'hostname-form')">
       <label for="hostname">Hostname:</label>
-      <input type="text" id="hostname" name="hostname" placeholder="Sprengsystem" value="" /><br /><br />
+      <br />
+      <input type="text" id="hostname" name="hostname" class="setting" placeholder="Sprengsystem" value="" /><br />
       <input type="submit" value="Speichern" />
       <input type="reset" value="Reset" />
     </form>
-    <br />
     <hr />
     <h4>Wetter-API Einstellungen</h4>
     <form id="weather-form" onchange="saveweatherSettings(event, 'weather-form')">
@@ -418,38 +418,50 @@
     </form>
     <form id="openweather-form" style="display: block" onsubmit="saveSettings(event, 'openweather-form')">
       <label for="weather-op-api-key-ow">OpenWeather API-Key:</label>
-      <input type="text" id="weather-op-api-key-ow" name="api_key" placeholder="apikey" value="" /><br />
+      <br />
+      <input type="text" id="weather-op-api-key-ow" name="api_key" class="setting" placeholder="apikey" value="" /><br />
       <label for="longitude-ow">Longitude:</label>
-      <input type="number" id="longitude-ow" name="longitude" placeholder="9,123" value=""
+      <br />
+      <input type="number" id="longitude-ow" name="longitude" class="setting" placeholder="9,123" value=""
         step="0.00001" /><br />
       <label for="latitude-ow">Latitude:</label>
-      <input type="number" id="latitude-ow" name="latitude" placeholder="52,123" value=""
+      <br />
+      <input type="number" id="latitude-ow" name="latitude" class="setting" placeholder="52,123" value=""
         step="0.00001" /><br />
       <label for="rain_duration_past_ow">Berücksichtige Niederschlag der letzten:</label>
-      <input type="number" id="rain_duration_past_ow" name="rain_duration_past" placeholder="24" min="1" max="24"
+      <br />
+      <input type="number" id="rain_duration_past_ow" name="rain_duration_past" class="setting" placeholder="24" min="1" max="24"
         value="" /> Stunden<br />
       <label for="rain_duration_forecast_ow">Berücksichtige Niederschlag der kommenden:</label>
-      <input type="number" id="rain_duration_forecast_ow" name="rain_duration_forecast" placeholder="24" min="1"
+      <br />
+      <input type="number" id="rain_duration_forecast_ow" name="rain_duration_forecast" class="setting" placeholder="24" min="1"
         max="24" value="" /> Stunden<br />
       <input type="submit" value="Speichern" />
       <input type="reset" value="Reset" />
     </form>
     <form id="meteomatics-form" style="display: none" onsubmit="saveSettings(event, 'meteomatics-form')">
       <label for="weather-op-api-key-meteo">OpenWeather API-Key:</label>
-      <input type="text" id="weather-op-api-key-meteo" name="api_key" placeholder="apikey" value="" /><br />
+      <br />
+      <input type="text" id="weather-op-api-key-meteo" name="api_key" class="setting" placeholder="apikey" value="" /><br />
       <label for="weather-meteo-user">Meteomatics-Benutzername:</label>
-      <input type="text" id="weather-meteo-user" name="meteo_user" placeholder="username" value="" /><br />
+      <br />
+      <input type="text" id="weather-meteo-user" name="meteo_user" class="setting" placeholder="username" value="" /><br />
       <label for="weather-meteo-pw">Meteomatics-Passwort:</label>
-      <input type="text" id="weather-meteo-pw" name="meteo_pw" placeholder="password" value="" /><br />
+      <br />
+      <input type="text" id="weather-meteo-pw" name="meteo_pw" class="setting" placeholder="password" value="" /><br />
       <label for="longitude-meteo">Longitude:</label>
-      <input type="number" id="longitude-meteo" name="longitude" placeholder="9,123" value="" step="0.00001" /><br />
+      <br />
+      <input type="number" id="longitude-meteo" name="longitude" class="setting" placeholder="9,123" value="" step="0.00001" /><br />
       <label for="latitude-meteo">Latitude:</label>
-      <input type="number" id="latitude-meteo" name="latitude" placeholder="52,123" value="" step="0.00001" /><br />
+      <br />
+      <input type="number" id="latitude-meteo" name="latitude" class="setting" placeholder="52,123" value="" step="0.00001" /><br />
       <label for="rain_duration_past_meteo">Berücksichtige Niederschlag der letzten:</label>
-      <input type="number" id="rain_duration_past_meteo" name="rain_duration_past" placeholder="24" min="1" max="24"
+      <br />
+      <input type="number" id="rain_duration_past_meteo" name="rain_duration_past" class="setting" placeholder="24" min="1" max="24"
         value="" /> Stunden<br />
       <label for="rain_duration_forecast_meteo">Berücksichtige Niederschlag der kommenden:</label>
-      <input type="number" id="rain_duration_forecast_meteo" name="rain_duration_forecast" placeholder="24" min="1"
+      <br />
+      <input type="number" id="rain_duration_forecast_meteo" name="rain_duration_forecast" class="setting" placeholder="24" min="1"
         max="24" value="" /> Stunden<br />
       <input type="submit" value="Speichern" />
       <input type="reset" value="Reset" />
@@ -457,16 +469,17 @@
     <hr />
     <form id="precipitation-form" onsubmit="saveSettings(event, 'precipitation-form')">
       <label for="precipitation-level">Grenze für vergangene Niederschlagsmenge bei automatischer Sprengung:</label>
-      <input type="number" id="precipitation-level" name="precipitation_level" min="1" max="1000" placeholder="20" />
+      <br />
+      <input type="number" id="precipitation-level" name="precipitation_level" class="setting" min="1" max="1000" placeholder="20" />
       mm<br />
       <label for="precipitation-level-forecast">Grenze für vorraussichtlicher Niederschlagsmenge bei automatischer
         Sprengung:</label>
-      <input type="number" id="precipitation-level-forecast" name="precipitation_level_forecast" min="1" max="1000"
+      <br />
+      <input type="number" id="precipitation-level-forecast" name="precipitation_level_forecast" class="setting" min="1" max="1000"
         placeholder="20" /> mm<br />
       <input type="submit" value="Speichern" />
       <input type="reset" value="Reset" />
     </form>
-    <br />
     <hr />
     <h4>Action Kreislauf/Button/Funktionen aktivieren</h4>
     <form id="action-form">
@@ -476,22 +489,29 @@
         <span class="slider round"></span>
       </label>
     </form>
+    <hr />
+    <h4>Light/Dark Mode</h4>
+    <label class="switch">
+      <span>☀️</span>
+      <input type="checkbox" id="design_mode" onchange="toggleSetDarkMode()">
+      <span class="slider round"></span>
+      <span>🌙</span>
+    </label>
     <br />
     <hr />
     <h4>Sicherheits Einstellungen</h4>
     <form id="security-form" onsubmit="saveSettings(event, 'security-form')">
       <label for="max-pump-time">Pumpe abschalten bei überschreiten der Betriebszeit von:</label>
-      <input type="number" id="max-pump-time" name="max_pump_time" min="5" max="180" placeholder="120" /> min<br />
+      <input type="number" id="max-pump-time" name="max_pump_time" class="setting" min="5" max="180" placeholder="120" /> min<br />
       <label for="max-valve1-time">Ventil 1 abschalten bei überschreiten der Betriebszeit von:</label>
-      <input type="number" id="max-valve1-time" name="max_valve1_time" min="5" max="180" placeholder="75" /> min<br />
+      <input type="number" id="max-valve1-time" name="max_valve1_time" class="setting" min="5" max="180" placeholder="75" /> min<br />
       <label for="max-valve2-time">Ventil 2 abschalten bei überschreiten der Betriebszeit von:</label>
-      <input type="number" id="max-valve2-time" name="max_valve2_time" min="5" max="180" placeholder="75" /> min<br />
+      <input type="number" id="max-valve2-time" name="max_valve2_time" class="setting" min="5" max="180" placeholder="75" /> min<br />
       <label class="actionEnabled" for="max-action-time">Action abschalten bei überschreiten der Betriebszeit von:</label>
-      <input class="actionEnabled" type="number" id="max-action-time" name="max_action_time" min="5" max="180" placeholder="75" /><span class="actionEnabled"> min</span><br />
+      <input class="actionEnabled" type="number" id="max-action-time" class="setting" name="max_action_time" min="5" max="180" placeholder="75" /><span class="actionEnabled"> min</span>
       <input type="submit" value="Speichern" />
       <input type="reset" value="Reset" />
     </form>
-    <br />
     <hr />
     <input type="button" onclick="toggleRestart()" value="Neustart" />
     <input type="button" onclick="toggleReset()" value="Reset" />

@@ -17,7 +17,7 @@ Optional, the web interface displays current sensor reading e.g. temperature, hu
 - ~~all Serial.prints also on WebSerial~~
 - ~~add dark mode~~
 - add smart home integration (eg. MQTT or matter)
-- be able, to select ESP pins for all outputs/inputs/sensors
+- be able, to select ESP pins for all outputs/inputs/sensors via UI
 - selection of up to X circels, which will be displayed corresponding to count of circles correctly in adaptive UI (timetable, buttons etc.)
-- add documentation and wiring diagram 
+- add documentation and wiring diagram
 - and probably much more...

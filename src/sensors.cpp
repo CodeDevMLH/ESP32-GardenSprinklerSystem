@@ -98,7 +98,7 @@ int readGroundHumidity() {
             println("Failed to read/connect ground humidity data sensor! Check connection!");
             return -1;
         }
-        groundHumidity = map(groundHumidity, 0, 4096, 0, 100);
+        groundHumidity = map(groundHumidity, 4096, 0, 0, 100);
         printFormatted("Ground humidity: %d%\n", groundHumidity);
     }
     return groundHumidity;

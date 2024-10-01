@@ -736,6 +736,10 @@ void setup() {
         config.PRECIPITATION_MODE_FORECAST = !config.PRECIPITATION_MODE_FORECAST;
         println("Evaluate rain forecast mode set to: " + String(config.PRECIPITATION_MODE_FORECAST ? "true" : "false"));
         saveConfig(configFilePath);
+        if (config.PRECIPITATION_MODE_FORECAST) {
+            alreadyCheckedPrecipForecast = false;
+            alreadyCheckedPrecipPast = false;
+        }
         request->send(200, "application/json", "{\"status\":" + String(config.PRECIPITATION_MODE_FORECAST ? "true" : "false") + "}");
     });
     server.on("/mentionSunset", HTTP_GET, [](AsyncWebServerRequest *request) {
@@ -884,7 +888,7 @@ void setup() {
         request->send(200, "application/json", "{\"status\":\"true\"}"); });
 
     server.on("/checkActionEnabled", HTTP_GET, [](AsyncWebServerRequest *request) {
-        println("Action is enabled: " + String(config.ACTION_ENABLED ? "on" : "off"));
+        println("New Web Request in reload. Action is enabled: " + String(config.ACTION_ENABLED ? "on" : "off"));
         request->send(200, "application/json", "{\"status\":" + String(config.ACTION_ENABLED ? "true" : "false") + "}");
     });
 
@@ -1025,7 +1029,7 @@ void securityCheck() {
 
 // MARK: Timer Logic
 void TimerLogic() {
-    if (setTimer1Active || setTimer2Active) {
+    if ((setTimer1Active || setTimer2Active) && !overMidnight(config.TIMER.TIME, calculateTime(config.TIMER.TIME, config.TIMER.DURATION))) {
         if (config.TIMER.Time_EN) {
             TimerLogicActive = true;
             if (setTimer1Active && !valve1State && config.TIMER.DURATION > 0) {
@@ -1170,7 +1174,7 @@ bool isInTimeSlot(DayConfig *dayConfig) {
 
 bool checkPrecipitation(DayConfig *dayConfig, bool modeActive, float rainValue, float rainLimit, String messageActive, String messageInactive) {
     if (modeActive) {
-        if (rainValue > rainLimit && (!valve1State || !valve2State) && isInTimeSlot(dayConfig)) {
+        if (rainValue > rainLimit && !valve1State && !valve2State && isInTimeSlot(dayConfig)) {
             println(messageInactive + String(rainValue) + "mm");
             return true;
         } else if (rainValue > rainLimit && (valve1State || valve2State) && isInTimeSlot(dayConfig)) {
@@ -1223,43 +1227,41 @@ DayConfig *getDayConfig() {
     return dayConfig;
 }
 
-// MARK: Logic
+// MARK: TT Logic
 void TimetableLogic() {
     if (!TimerLogicActive) {
 
         DayConfig *dayConfig = getDayConfig();
 
-        if (dayConfig->ON && isInTimeSlot(dayConfig)) {
+        if (dayConfig->ON && isInTimeSlot(dayConfig) && !overMidnight(dayConfig->TIME.ON_TIME, calculateTime(dayConfig->TIME.ON_TIME, dayConfig->TIME.TIMER_1 + dayConfig->TIME.TIMER_2))) {
             if (config.AUTOMATIC_MODE) {
-                if (!alreadyCheckedPrecipPast) {
-                    alreadyCheckedPrecipPast = checkPrecipitation(
-                        dayConfig,
-                        config.PRECIPITATION_MODE,
-                        calculatedRain,
-                        config.PRECIPITATION_AMOUNT,
-                        "Past rain amount over limit, but watering is active: ",
-                        "Past rain amount over limit, no watering: ");
-                } else if (!isInTimeSlot(dayConfig)){
-                    alreadyCheckedPrecipPast = false;
-                }
-                if (alreadyCheckedPrecipPast) {
-                        return;
+                if (config.PRECIPITATION_MODE || config.PRECIPITATION_MODE_FORECAST) {
+                    if (!alreadyCheckedPrecipPast) {
+                        alreadyCheckedPrecipPast = checkPrecipitation(
+                            dayConfig,
+                            config.PRECIPITATION_MODE,
+                            calculatedRain,
+                            config.PRECIPITATION_AMOUNT,
+                            "Past rain amount over limit, but watering is active: ",
+                            "Past rain amount over limit, no watering: ");
+                    } else if (!isInTimeSlot(dayConfig)){
+                        alreadyCheckedPrecipPast = false;
                     }
-                
-                if (!alreadyCheckedPrecipForecast) {
-                    alreadyCheckedPrecipForecast = checkPrecipitation(
-                        dayConfig,
-                        config.PRECIPITATION_MODE_FORECAST,
-                        rainForecast,
-                        config.PRECIPITATION_AMOUNT_FORECAST,
-                        "Forecast rain amount over limit, but watering is active: ",
-                        "Forecast rain amount over limit, no watering: ");
-                } else if (!isInTimeSlot(dayConfig)){
-                    alreadyCheckedPrecipForecast = false;
-                }
-                if (alreadyCheckedPrecipForecast) {
-                        return;
+                    if (alreadyCheckedPrecipPast) return;
+                    
+                    if (!alreadyCheckedPrecipForecast) {
+                        alreadyCheckedPrecipForecast = checkPrecipitation(
+                            dayConfig,
+                            config.PRECIPITATION_MODE_FORECAST,
+                            rainForecast,
+                            config.PRECIPITATION_AMOUNT_FORECAST,
+                            "Forecast rain amount over limit, but watering is active: ",
+                            "Forecast rain amount over limit, no watering: ");
+                    } else if (!isInTimeSlot(dayConfig)){
+                        alreadyCheckedPrecipForecast = false;
                     }
+                    if (alreadyCheckedPrecipForecast) return;
+                }
 
                 if (config.MENTION_SUNSET) {
                     if (!(dayConfig->TIME.ON_TIME < sunsetTime)) {
@@ -1314,7 +1316,7 @@ void TimetableLogic() {
                         pumpStartTime = getCurrentTimeInt();
                         valve1State = true;
                         valve1StartTime = getCurrentTimeInt();
-                        println("Turned valve 1 on due to timetable"); // MARK: PROBLEM prints one minute long
+                        println("Turned valve 1 on due to timetable");
                     }
 
                 } else if (!valve2State && !valve1State && dayConfig->TIME.TIMER_2 > 0) {
@@ -1368,6 +1370,11 @@ void checkButtons() {
             if (Valve1ButtonState == LOW) {
                 valve1State = !valve1State;
                 println("Button pressed: " + String(valve1State ? "Valve 1 is on" : "Valve 1 is off"));
+                if (valve1State) {
+                    valve1StartTime = getCurrentTimeInt();
+                } else {
+                    valve1StartTime = -1;
+                }
             }
         }
     }
@@ -1385,6 +1392,11 @@ void checkButtons() {
             if (Valve2ButtonState == LOW) {
                 valve2State = !valve2State;
                 println("Button pressed: " + String(valve2State ? "Valve 2 is on" : "Valve 2 is off"));
+                if (valve2State) {
+                    valve2StartTime = getCurrentTimeInt();
+                } else {
+                    valve2StartTime = -1;
+                }
             }
         }
     }
@@ -1402,6 +1414,11 @@ void checkButtons() {
             if (PumpButtonState == LOW) {
                 pumpState = !pumpState;
                 println("Button pressed: " + String(pumpState ? "Pump is on" : "Pump is off"));
+                if (pumpState) {
+                    pumpStartTime = getCurrentTimeInt();
+                } else {
+                    pumpStartTime = -1;
+                }
             }
         }
     }
@@ -1419,6 +1436,11 @@ void checkButtons() {
             if (ActionButtonState == LOW) {
                 actionState = !actionState;
                 println("Button pressed: " + String(actionState ? "Action is on" : "Action is off"));
+                if (actionState) {
+                    actionStartTime = getCurrentTimeInt();
+                } else {
+                    actionStartTime = -1;
+                }
             }
         }
     }

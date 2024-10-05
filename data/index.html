@@ -86,11 +86,11 @@
       <span id="stat_pumpe">null</span>
     </p>
     <p>
-      <span>Ventil 1:</span>
+      <span>Kreis Nord:</span>
       <span id="stat_kreis1">null</span>
     </p>
     <p>
-      <span>Ventil 2:</span>
+      <span>Kreis Süd:</span>
       <span id="stat_kreis2">null</span>
     </p>
     <p>
@@ -98,18 +98,18 @@
       <span class="actionEnabled" id="stat_action">null</span>
     </p>
     <p>
-      <span>Timer Kreis 1:</span>
+      <span>Timer Nord:</span>
       <span id="kreis1-timer-stat">null</span>
     </p>
     <p>
-      <span>Timer Kreis 2:</span>
+      <span>Timer Süd:</span>
       <span id="kreis2-timer-stat">null</span>
     </p>
 
     <div>
       <h2><i class="fas fa-sliders-h icon"></i>Manuelle Steuerung</h2>
-      <input type="button" id="valve1-button" class="manualControl red" onclick="toggleValve1(this)" value="Ventil 1 AN" />
-      <input type="button" id="valve2-button" class="manualControl red" onclick="toggleValve2(this)" value="Ventil 2 AN" />
+      <input type="button" id="valve1-button" class="manualControl red" onclick="toggleValve1(this)" value="Nord AN" />
+      <input type="button" id="valve2-button" class="manualControl red" onclick="toggleValve2(this)" value="Süd AN" />
       <input type="button" id="action-button" class="actionEnabled manualControl red" onclick="toggleAction(this)" value="Action AN" />
       <input type="button" id="pump-button" class="manualControl red" onclick="togglePump(this)" value="Pumpe AN" />
     </div>
@@ -147,8 +147,8 @@
           <th>Wochentag</th>
           <th>Aktiv</th>
           <th>Einschalt-Zeit</th>
-          <th>Timer Kreis 1</th>
-          <th>Timer Kreis 2</th>
+          <th>Timer Nord</th>
+          <th>Timer Süd</th>
         </tr>
         <tr>
           <td>Montag</td>
@@ -227,11 +227,11 @@
       </label>
     </div>
     <br />
-    <input type="button" id="timer1-button" onclick="sendTimer(1)" value="Start timer Kreis 1"
+    <input type="button" id="timer1-button" onclick="sendTimer(1)" value="Start Timer Nord"
       style="display: inline-block" />
-    <input type="button" id="timer2-button" onclick="sendTimer(2)" value="Start timer Kreis 2"
+    <input type="button" id="timer2-button" onclick="sendTimer(2)" value="Start Timer Süd"
       style="display: inline-block" />
-    <input type="button" id="timer-all-button" onclick="sendTimer(3)" value="Start timer" style="display: none" />
+    <input type="button" id="timer-all-button" onclick="sendTimer(3)" value="Start Timer" style="display: none" />
     <input type="button" id="stop-timer" onclick="stopTimer()" value="Timer stoppen" />
   </div>
 
@@ -246,8 +246,8 @@
         <th>Wochentag</th>
         <th>Aus/Ein</th>
         <th>Einschalt-Zeit</th>
-        <th>Timer Kreis 1</th>
-        <th>Timer Kreis 2</th>
+        <th>Timer Nord</th>
+        <th>Timer Süd</th>
       </tr>
       <tr>
         <td>Montag</td>
@@ -503,9 +503,9 @@
     <form id="security-form" onsubmit="saveSettings(event, 'security-form')">
       <label for="max-pump-time">Pumpe abschalten bei überschreiten der Betriebszeit von:</label>
       <input type="number" id="max-pump-time" name="max_pump_time" class="setting" min="5" max="180" placeholder="120" /> min<br />
-      <label for="max-valve1-time">Ventil 1 abschalten bei überschreiten der Betriebszeit von:</label>
+      <label for="max-valve1-time">Ventil 1 (Nord) abschalten bei überschreiten der Betriebszeit von:</label>
       <input type="number" id="max-valve1-time" name="max_valve1_time" class="setting" min="5" max="180" placeholder="75" /> min<br />
-      <label for="max-valve2-time">Ventil 2 abschalten bei überschreiten der Betriebszeit von:</label>
+      <label for="max-valve2-time">Ventil 2 (Süd) abschalten bei überschreiten der Betriebszeit von:</label>
       <input type="number" id="max-valve2-time" name="max_valve2_time" class="setting" min="5" max="180" placeholder="75" /> min<br />
       <label class="actionEnabled" for="max-action-time">Action abschalten bei überschreiten der Betriebszeit von:</label>
       <input class="actionEnabled setting" type="number" id="max-action-time" name="max_action_time" min="5" max="180" placeholder="75" /><span class="actionEnabled"> min</span>
@@ -529,7 +529,7 @@
       </tr>
       <tr>
         <td>Sketch-Version</td>
-        <td id="version">V 1.0.0</td>
+        <td id="version">V 1.x.x</td>
       </tr>
       <tr>
         <td>IP-Adresse</td>
@@ -550,6 +550,10 @@
       <tr>
         <td>Gateway</td>
         <td id="esp-gateway">gateway</td>
+      </tr>
+      <tr>
+        <td>RRSI</td>
+        <td id="esp-rrsi">rrsi</td>
       </tr>
       <tr>
         <td>Hostname</td>

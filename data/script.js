@@ -16,33 +16,33 @@ let domReady = false;
 let pageLoaded = false;
 
 document.addEventListener('DOMContentLoaded', () => {
-    domReady = true;
-    if (pageLoaded) checkActionEnabled();
+  domReady = true;
+  if (pageLoaded) checkActionEnabled();
 
-    const savedMode = localStorage.getItem('darkMode');
-    if (savedMode) {
-        switchMode(savedMode === 'enabled');
-        document.getElementById('design_mode').checked = (savedMode === 'enabled');
-    } else {
-        const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        switchMode(prefersDarkMode);
-        document.getElementById('design_mode').checked = prefersDarkMode;
-    }
+  const savedMode = localStorage.getItem('darkMode');
+  if (savedMode) {
+    switchMode(savedMode === 'enabled');
+    document.getElementById('design_mode').checked = (savedMode === 'enabled');
+  } else {
+    const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    switchMode(prefersDarkMode);
+    document.getElementById('design_mode').checked = prefersDarkMode;
+  }
 });
 
 window.addEventListener('load', () => {
-    pageLoaded = true;
-    if (domReady) checkActionEnabled();
+  pageLoaded = true;
+  if (domReady) checkActionEnabled();
 });
 
 // Dark Mode Umschalten
 function switchMode(isDark) {
   if (isDark) {
-      document.body.classList.add('dark-mode');
-      localStorage.setItem('darkMode', 'enabled');
+    document.body.classList.add('dark-mode');
+    localStorage.setItem('darkMode', 'enabled');
   } else {
-      document.body.classList.remove('dark-mode');
-      localStorage.setItem('darkMode', 'disabled');
+    document.body.classList.remove('dark-mode');
+    localStorage.setItem('darkMode', 'disabled');
   }
 }
 
@@ -99,24 +99,24 @@ function toggleSetDarkMode() {
 
 // function to show all action elements
 async function checkActionEnabled() {
-    try {
-      const response = await fetch("/checkActionEnabled");
-      const data = await response.json();
-      console.log("Action enabled: ", data);
-      if (data.status) {
-        const actionElements = document.querySelectorAll('.actionEnabled');
-        actionElements.forEach(element => {
-          element.style.display = "inline";
-        });
-      } else {
-        const actionElements = document.querySelectorAll('.actionEnabled');
-        actionElements.forEach(element => {
-          element.style.display = "none";
-        });
-      }
-    } catch (error) {
-      console.error("Error on check action enabled:", error);
+  try {
+    const response = await fetch("/checkActionEnabled");
+    const data = await response.json();
+    console.log("Action enabled: ", data);
+    if (data.status) {
+      const actionElements = document.querySelectorAll('.actionEnabled');
+      actionElements.forEach(element => {
+        element.style.display = "inline";
+      });
+    } else {
+      const actionElements = document.querySelectorAll('.actionEnabled');
+      actionElements.forEach(element => {
+        element.style.display = "none";
+      });
     }
+  } catch (error) {
+    console.error("Error on check action enabled:", error);
+  }
 }
 
 // Function to toggle wetaher settings options
@@ -176,29 +176,21 @@ async function loadSettingsWeather() {
     if (data.weather_channel === "openweather") {
       document.getElementById("openweather-form").style.display = "block";
       document.getElementById("meteomatics-form").style.display = "none";
-      document.getElementById("weather-op-api-key-ow").value =
-        data.api_key;
+      document.getElementById("weather-op-api-key-ow").value = data.api_key;
       document.getElementById("longitude-ow").value = data.longitude;
       document.getElementById("latitude-ow").value = data.latitude;
-      document.getElementById("rain_duration_past_ow").value =
-        data.rain_duration_past;
-      document.getElementById("rain_duration_forecast_ow").value =
-        data.rain_duration_forecast;
+      document.getElementById("rain_duration_past_ow").value = data.rain_duration_past;
+      document.getElementById("rain_duration_forecast_ow").value = data.rain_duration_forecast;
     } else if (data.weather_channel === "meteomatics") {
-      document.getElementById("weather-op-api-key-meteo").value =
-        data.api_key;
+      document.getElementById("weather-op-api-key-meteo").value = data.api_key;
       document.getElementById("openweather-form").style.display = "none";
       document.getElementById("meteomatics-form").style.display = "block";
-      document.getElementById("weather-meteo-user").value =
-        data.meteomatics_user;
-      document.getElementById("weather-meteo-pw").value =
-        data.meteomatics_password;
+      document.getElementById("weather-meteo-user").value = data.meteomatics_user;
+      document.getElementById("weather-meteo-pw").value = data.meteomatics_password;
       document.getElementById("longitude-meteo").value = data.longitude;
       document.getElementById("latitude-meteo").value = data.latitude;
-      document.getElementById("rain_duration_past_meteo").value =
-        data.rain_duration_past;
-      document.getElementById("rain_duration_forecast_meteo").value =
-        data.rain_duration_forecast;
+      document.getElementById("rain_duration_past_meteo").value = data.rain_duration_past;
+      document.getElementById("rain_duration_forecast_meteo").value = data.rain_duration_forecast;
     }
   } catch (error) {
     console.error("Error loading settings:", error);
@@ -278,37 +270,37 @@ function showEmergencyStopConfirmationDialog() {
     const confirmButton = document.getElementById('confirmButtonEmergency');
     confirmButton.onclick = () => {
       modalEmergencyOverlay.classList.remove('show');
-        resolve(true); // Resolve das Promise bei Bestätigung
+      resolve(true); // Resolve das Promise bei Bestätigung
     };
-});
+  });
 }
 
 // Function to reset whole esp
-async function emergencyLoop() {  
+async function emergencyLoop() {
   try {
-      await showEmergencyStopConfirmationDialog();
-      const response = await fetch("/emergencyLoop");
-      const result = await response.json();
-      console.log("emergency stopped!: Success: ", result.status);
-      if (result.status) {
-        createAlert(
-          "Info!",
-          "Not-Aus aufgehoben!",
-          "info",
-          true,
-          true
-        );
-      } else {
-        createAlert(
-          "Warnung!",
-          "Not-Aus konnte nicht aufgehoben werden!",
-          "warning",
-          false,
-          true
-        );
-      }
-    } catch (error) {
-      console.error("Error on emergency stop:", error);
+    await showEmergencyStopConfirmationDialog();
+    const response = await fetch("/emergencyLoop");
+    const result = await response.json();
+    console.log("emergency stopped!: Success: ", result.status);
+    if (result.status) {
+      createAlert(
+        "Info!",
+        "Not-Aus aufgehoben!",
+        "info",
+        true,
+        true
+      );
+    } else {
+      createAlert(
+        "Warnung!",
+        "Not-Aus konnte nicht aufgehoben werden!",
+        "warning",
+        false,
+        true
+      );
+    }
+  } catch (error) {
+    console.error("Error on emergency stop:", error);
   }
 }
 
@@ -441,8 +433,7 @@ async function fetchCurrentTimeclockSettings() {
 
     // Update each day's settings
     for (let day in data) {
-      document.getElementById(`${day}-on-time-switch`).checked =
-        data[day].onTimeSwitch;
+      document.getElementById(`${day}-on-time-switch`).checked = data[day].onTimeSwitch;
       document.getElementById(`${day}-on-time`).value = data[day].onTime;
       document.getElementById(`${day}-timer1`).value = data[day].timer1;
       document.getElementById(`${day}-timer2`).value = data[day].timer2;
@@ -477,30 +468,14 @@ async function getHomeStatus() {
     document.getElementById("nds-data").checked = data.nds_active;
     document.getElementById("nds-data-forecast").checked = data.nds_active_forecast;
     document.getElementById("mention-sunset").checked = data.mentions_sunset;
-    document.getElementById("pump-button").value = data.pump_button
-      ? "Pumpe AUS"
-      : "Pumpe AN";
-    document.getElementById("stat_pumpe").innerText = data.pump_button
-      ? "AN"
-      : "AUS";
-    document.getElementById("valve1-button").value = data.valve1_button
-      ? "Ventil 1 AUS"
-      : "Ventil 1 AN";
-    document.getElementById("stat_kreis1").innerText = data.valve1_button
-      ? "AN"
-      : "AUS";
-    document.getElementById("valve2-button").value = data.valve2_button
-      ? "Ventil 2 AUS"
-      : "Ventil 2 AN";
-    document.getElementById("stat_kreis2").innerText = data.valve2_button
-      ? "AN"
-      : "AUS";
-    document.getElementById("action-button").value = data.action_button
-      ? "Action AUS"
-      : "Action AN";
-    document.getElementById("stat_action").innerText = data.action_button
-      ? "AN"
-      : "AUS";
+    document.getElementById("pump-button").value = data.pump_button ? "Pumpe AUS" : "Pumpe AN";
+    document.getElementById("stat_pumpe").innerText = data.pump_button ? "AN" : "AUS";
+    document.getElementById("valve1-button").value = data.valve1_button ? "Nord AUS" : "Nord AN";
+    document.getElementById("stat_kreis1").innerText = data.valve1_button ? "AN" : "AUS";
+    document.getElementById("valve2-button").value = data.valve2_button ? "Süd AUS" : "Süd AN";
+    document.getElementById("stat_kreis2").innerText = data.valve2_button ? "AN" : "AUS";
+    document.getElementById("action-button").value = data.action_button ? "Action AUS" : "Action AN";
+    document.getElementById("stat_action").innerText = data.action_button ? "AN" : "AUS";
     setManualControlButtons();
     //console.log("updated home data");
   } catch (error) {
@@ -518,7 +493,7 @@ function setManualControlButtons() {
     button.classList.add("red");
   }
   button = document.getElementById("valve1-button");
-  if (button.value === "Ventil 1 AUS") {
+  if (button.value === "Nord AUS") {
     button.classList.remove("red");
     button.classList.add("green");
   } else {
@@ -526,7 +501,7 @@ function setManualControlButtons() {
     button.classList.add("red");
   }
   button = document.getElementById("valve2-button");
-  if (button.value === "Ventil 2 AUS") {
+  if (button.value === "Süd AUS") {
     button.classList.remove("red");
     button.classList.add("green");
   } else {
@@ -556,13 +531,10 @@ async function getHomeTimetable() {
       if (data[day].on_time === "") {
         document.getElementById(`view-${day}-on-time`).innerText = "--:--";
       } else {
-        document.getElementById(`view-${day}-on-time`).innerText =
-          data[day].on_time;
+        document.getElementById(`view-${day}-on-time`).innerText = data[day].on_time;
       }
-      document.getElementById(`view-${day}-timer1`).innerText =
-        data[day].timer1 + " min";
-      document.getElementById(`view-${day}-timer2`).innerText =
-        data[day].timer2 + " min";
+      document.getElementById(`view-${day}-timer1`).innerText = data[day].timer1 + " min";
+      document.getElementById(`view-${day}-timer2`).innerText = data[day].timer2 + " min";
     }
   } catch (error) {
     console.error("Error on fetch timetable:", error);
@@ -593,42 +565,42 @@ async function toggleRestart() {
 //MARK: reset esp
 function showResetConfirmationDialog() {
   return new Promise((resolve, reject) => {
-      // Zeige den Dialog an
-      const modalOverlay = document.getElementById('modalOverlay');
-      modalOverlay.classList.add('show');
+    // Zeige den Dialog an
+    const modalOverlay = document.getElementById('modalOverlay');
+    modalOverlay.classList.add('show');
 
-      // Event-Handler für die Bestätigungs-Schaltfläche
-      const confirmButton = document.getElementById('confirmButton');
-      confirmButton.onclick = () => {
-          modalOverlay.classList.remove('show');
-          resolve(true); // Resolve das Promise bei Bestätigung
-      };
+    // Event-Handler für die Bestätigungs-Schaltfläche
+    const confirmButton = document.getElementById('confirmButton');
+    confirmButton.onclick = () => {
+      modalOverlay.classList.remove('show');
+      resolve(true); // Resolve das Promise bei Bestätigung
+    };
 
-      // Event-Handler für die Abbrechen-Schaltfläche
-      const cancelButton = document.getElementById('cancelButton');
-      cancelButton.onclick = () => {
-          modalOverlay.classList.remove('show');
-          reject(false); // Reject das Promise bei Abbrechen
-      };
+    // Event-Handler für die Abbrechen-Schaltfläche
+    const cancelButton = document.getElementById('cancelButton');
+    cancelButton.onclick = () => {
+      modalOverlay.classList.remove('show');
+      reject(false); // Reject das Promise bei Abbrechen
+    };
   });
 }
 
 // Function to reset whole esp
 async function toggleReset() {
   try {
-      await showResetConfirmationDialog();
-      const response = await fetch("/reset");
-      const responseData = await response.text();
-      console.log(responseData);
-      createAlert(
-        "Reset",
-        "ESP reset wird ausgeführt!",
-        "warning",
-        false,
-        true
-      );
+    await showResetConfirmationDialog();
+    const response = await fetch("/reset");
+    const responseData = await response.text();
+    console.log(responseData);
+    createAlert(
+      "Reset",
+      "ESP reset wird ausgeführt!",
+      "warning",
+      false,
+      true
+    );
   } catch (error) {
-      console.error("Error on reset or reset canceled:", error);
+    console.error("Error on reset or reset canceled:", error);
   }
 }
 
@@ -751,9 +723,7 @@ async function togglePump(button) {
     const response = await fetch("/togglePump");
     const data = await response.json();
     button.value = data.status ? "Pumpe AUS" : "Pumpe AN";
-    document.getElementById("stat_pumpe").innerText = data.status
-      ? "AN"
-      : "AUS";
+    document.getElementById("stat_pumpe").innerText = data.status ? "AN" : "AUS";
   } catch (error) {
     console.error("Error toggle pump:", error);
   }
@@ -771,15 +741,13 @@ async function toggleValve1(button) {
   try {
     const response = await fetch("/toggleValve1");
     const data = await response.json();
-    button.value = data.status ? "Ventil 1 AUS" : "Ventil 1 AN";
-    document.getElementById("stat_kreis1").innerText = data.status
-      ? "AN"
-      : "AUS";
+    button.value = data.status ? "Nord AUS" : "Nord AN";
+    document.getElementById("stat_kreis1").innerText = data.status ? "AN" : "AUS";
   } catch (error) {
     console.error("Error toggle valve 1:", error);
   }
 
-  if (button.value === "Ventil 1 AUS") {
+  if (button.value === "Nord AUS") {
     button.classList.remove("red");
     button.classList.add("green");
   } else {
@@ -792,15 +760,13 @@ async function toggleValve2(button) {
   try {
     const response = await fetch("/toggleValve2");
     const data = await response.json();
-    button.value = data.status ? "Ventil 2 AUS" : "Ventil 2 AN";
-    document.getElementById("stat_kreis2").innerText = data.status
-      ? "AN"
-      : "AUS";
+    button.value = data.status ? "Süd AUS" : "Süd AN";
+    document.getElementById("stat_kreis2").innerText = data.status ? "AN" : "AUS";
   } catch (error) {
     console.error("Error toggle valve 2:", error);
   }
 
-  if (button.value === "Ventil 2 AUS") {
+  if (button.value === "Süd AUS") {
     button.classList.remove("red");
     button.classList.add("green");
   } else {
@@ -814,9 +780,7 @@ async function toggleAction(button) {
     const response = await fetch("/toggleAction");
     const data = await response.json();
     button.value = data.status ? "Action AUS" : "Action AN";
-    document.getElementById("stat_action").innerText = data.status
-      ? "AN"
-      : "AUS";
+    document.getElementById("stat_action").innerText = data.status ? "AN" : "AUS";
   } catch (error) {
     console.error("Error toggle action:", error);
   }
@@ -964,15 +928,14 @@ async function fetchESPInfo() {
     document.getElementById("esp-subnet").textContent = data.subnet;
     document.getElementById("AP-ssid").textContent = data.ssid;
     document.getElementById("esp-gateway").textContent = data.gateway;
+    document.getElementById("esp-rrsi").textContent = data.rrsi;
     document.getElementById("esp-hostname").textContent = data.hostname;
     document.getElementById("esp-kernel").textContent = data.kernel;
     document.getElementById("esp-chip-id").textContent = data.chip_id;
     document.getElementById("esp-flash-id").textContent = data.flash_id;
     document.getElementById("esp-flash").textContent = data.flash_size + " KB";
-    document.getElementById("esp-sketch-size").textContent =
-      data.sketch_size + " KB";
-    document.getElementById("esp-free-sketch").textContent =
-      data.free_space + " KB";
+    document.getElementById("esp-sketch-size").textContent = data.sketch_size + " KB";
+    document.getElementById("esp-free-sketch").textContent = data.free_space + " KB";
     document.getElementById("esp-heap").textContent = data.free_heap + " KB";
     document.getElementById("esp-FS").textContent = data.fs_size + " KB";
     document.getElementById("esp-free-FS").textContent = data.fs_used + " KB";

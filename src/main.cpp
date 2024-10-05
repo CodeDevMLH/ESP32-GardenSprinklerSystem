@@ -154,13 +154,13 @@ void checkReboot() {
 
 // MARK: Wifi
 boolean setNewWiFi(String ssid, String password) {
-    WiFi.disconnect();
-    WiFi.begin(ssid.c_str(), password.c_str());
-
     print("New SSID: ");
     println(ssid);
     print("New password: ");
     println(password);
+
+    WiFi.disconnect();
+    WiFi.begin(ssid.c_str(), password.c_str());
 
     while (WiFi.status() != WL_CONNECTED) {
         delay(500);
@@ -830,6 +830,12 @@ void setup() {
         }
         if (doc.containsKey("wifi_pw")) {
             config.network.PASSWORD = doc["wifi_pw"].as<String>();
+            println("Set new wifi credentials...");
+            if (!setNewWiFi(config.network.SSID, config.network.PASSWORD)) {
+                println("Failed to set new wifi credentials");
+                request->send(400, "application/json", "{\"status\":\"error\", \"message\":\"Failed to set new wifi credentials\"}");
+                return;
+            }
             println("New wifi credentials set");
         }
         if (doc.containsKey("hostname")) {
@@ -920,6 +926,7 @@ void setup() {
         doc["subnet"] = WiFi.subnetMask(); //.toString()
         doc["ssid"] = WiFi.SSID();
         doc["gateway"] = WiFi.gatewayIP(); //.toString()
+        doc["rrsi"] = WiFi.RSSI();
         doc["hostname"] = WiFi.getHostname();
         doc["kernel"] = ESP.getSdkVersion();
         doc["chip_id"] = ESP.getChipModel(); // String(ESP.getChipModel(), HEX);

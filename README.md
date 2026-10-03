@@ -1,3 +1,7 @@
+# V2 in progress!!!
+
+---
+
 # ESP32-GardenSprinklerSystem
 Garden sprinkler system is intended to automate a garden irrigation system/lawn sprinkler with ESP32 Hardware. The ESP will control relays, depended on automatic mode based on schedule or manual interaction, to control water valves for different water cycles.
 It also can optionally check previous rain and forecast rain via api calls to OpenWether or Meteomatics and depended on the limits activate the schedule. Timers for short/manually start of watering.
